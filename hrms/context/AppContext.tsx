@@ -356,7 +356,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [employees, setEmployees] = useState<EmployeeRecord[]>(initialEmployees);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaves);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
-  const [fiveYearSalaryReports, setFiveYearSalaryReports] = useState<any[]>(initialFiveYearSalaryReports);
+
+  const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   const [leaveBalances, setLeaveBalances] = useState({
     paid: 8,
