@@ -94,7 +94,7 @@ export const getPeerFeedbackByEmployee = async (req, res) => {
     try {
         const { period } = req.query;
         const where = {
-            employeeId: parseInt(req.params.employeeId),
+            employeeId: Number(req.params.employeeId),
             ...(period ? { reviewPeriod: period } : {}),
         };
 
@@ -127,7 +127,7 @@ export const getPeerFeedbackByEmployee = async (req, res) => {
 export const getPeerFeedbackById = async (req, res) => {
     try {
         const feedback = await prisma.peerFeedback.findUnique({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             include: {
                 employee: true,
                 reviewer: { select: { id: true, employeeId: true, email: true } },
@@ -148,7 +148,7 @@ export const getPeerFeedbackById = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const deletePeerFeedback = async (req, res) => {
     try {
-        await prisma.peerFeedback.delete({ where: { id: parseInt(req.params.id) } });
+        await prisma.peerFeedback.delete({ where: { id: Number(req.params.id) } });
         return res.status(200).json({ success: true, message: "Peer feedback deleted" });
     } catch (error) {
         if (error.code === "P2025") return res.status(404).json({ success: false, message: "Feedback not found" });

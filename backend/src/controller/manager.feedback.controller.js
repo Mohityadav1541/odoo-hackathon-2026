@@ -96,7 +96,7 @@ export const updateManagerFeedback = async (req, res) => {
         const overallScore = computeOverall(communicationScore, leadershipScore, ownershipScore, reliabilityScore);
 
         const updated = await prisma.managerFeedback.update({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             data: {
                 communicationScore: parseFloat(communicationScore),
                 leadershipScore:    parseFloat(leadershipScore),
@@ -123,7 +123,7 @@ export const getFeedbackByEmployee = async (req, res) => {
     try {
         const { period } = req.query;
         const where = {
-            employeeId: parseInt(req.params.employeeId),
+            employeeId: Number(req.params.employeeId),
             ...(period ? { reviewPeriod: period } : {}),
         };
 
@@ -152,7 +152,7 @@ export const getFeedbackByEmployee = async (req, res) => {
 export const getFeedbackById = async (req, res) => {
     try {
         const feedback = await prisma.managerFeedback.findUnique({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             include: {
                 employee: true,
                 manager:  { select: { id: true, employeeId: true, email: true } },
@@ -172,7 +172,7 @@ export const getFeedbackById = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const deleteManagerFeedback = async (req, res) => {
     try {
-        await prisma.managerFeedback.delete({ where: { id: parseInt(req.params.id) } });
+        await prisma.managerFeedback.delete({ where: { id: Number(req.params.id) } });
         return res.status(200).json({ success: true, message: "Feedback deleted" });
     } catch (error) {
         if (error.code === "P2025") return res.status(404).json({ success: false, message: "Feedback not found" });

@@ -98,7 +98,7 @@ export const createConfig = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const activateConfig = async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = Number(req.params.id);
 
         const config = await prisma.promotionConfig.findUnique({ where: { id } });
         if (!config) return res.status(404).json({ success: false, message: "Config not found" });
@@ -180,7 +180,7 @@ export const updateConfig = async (req, res) => {
         } = req.body;
 
         const updated = await prisma.promotionConfig.update({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             data: {
                 name,
                 attendanceWeight:      parseFloat(attendanceWeight),
@@ -210,12 +210,12 @@ export const updateConfig = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const deleteConfig = async (req, res) => {
     try {
-        const config = await prisma.promotionConfig.findUnique({ where: { id: parseInt(req.params.id) } });
+        const config = await prisma.promotionConfig.findUnique({ where: { id: Number(req.params.id) } });
         if (!config) return res.status(404).json({ success: false, message: "Config not found" });
         if (config.isActive) {
             return res.status(400).json({ success: false, message: "Cannot delete the active config. Activate another first." });
         }
-        await prisma.promotionConfig.delete({ where: { id: parseInt(req.params.id) } });
+        await prisma.promotionConfig.delete({ where: { id: Number(req.params.id) } });
         return res.status(200).json({ success: true, message: "Config deleted" });
     } catch (error) {
         console.error("DELETE CONFIG ERROR:", error);

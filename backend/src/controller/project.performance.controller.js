@@ -107,7 +107,7 @@ export const updateProjectPerformance = async (req, res) => {
         const completionPercentage = parseFloat(((completed / assigned) * 100).toFixed(2));
 
         const updated = await prisma.projectPerformance.update({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             data: {
                 goalsAssigned:       assigned,
                 goalsCompleted:      completed,
@@ -137,7 +137,7 @@ export const getProjectsByEmployee = async (req, res) => {
     try {
         const { period } = req.query;
         const where = {
-            employeeId: parseInt(req.params.employeeId),
+            employeeId: Number(req.params.employeeId),
             ...(period ? { reviewPeriod: period } : {}),
         };
 
@@ -168,7 +168,7 @@ export const getProjectsByEmployee = async (req, res) => {
 export const getProjectById = async (req, res) => {
     try {
         const record = await prisma.projectPerformance.findUnique({
-            where:   { id: parseInt(req.params.id) },
+            where:   { id: Number(req.params.id) },
             include: { employee: true, reviewer: { select: { id: true, employeeId: true, email: true } } },
         });
         if (!record) return res.status(404).json({ success: false, message: "Record not found" });
@@ -185,7 +185,7 @@ export const getProjectById = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const deleteProjectPerformance = async (req, res) => {
     try {
-        await prisma.projectPerformance.delete({ where: { id: parseInt(req.params.id) } });
+        await prisma.projectPerformance.delete({ where: { id: Number(req.params.id) } });
         return res.status(200).json({ success: true, message: "Record deleted" });
     } catch (error) {
         if (error.code === "P2025") return res.status(404).json({ success: false, message: "Record not found" });

@@ -116,7 +116,7 @@ export const updateReviewState = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const getReviewsByEmployee = async (req, res) => {
     try {
-        const employeeId = parseInt(req.params.employeeId);
+        const employeeId = Number(req.params.employeeId);
         const { period } = req.query;
 
         const where = { employeeId, ...(period ? { reviewPeriod: period } : {}) };
@@ -141,7 +141,7 @@ export const getReviewsByEmployee = async (req, res) => {
 export const getReviewById = async (req, res) => {
     try {
         const review = await prisma.performanceReview.findUnique({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             include: {
                 employee: { include: { user: { select: { email: true, employeeId: true } } } },
                 manager:  { select: { id: true, employeeId: true, email: true } },
@@ -163,12 +163,12 @@ export const getReviewById = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const deleteReview = async (req, res) => {
     try {
-        const review = await prisma.performanceReview.findUnique({ where: { id: parseInt(req.params.id) } });
+        const review = await prisma.performanceReview.findUnique({ where: { id: Number(req.params.id) } });
         if (!review) return res.status(404).json({ success: false, message: "Review not found" });
         if (review.state === "APPROVED") {
             return res.status(400).json({ success: false, message: "Approved reviews cannot be deleted" });
         }
-        await prisma.performanceReview.delete({ where: { id: parseInt(req.params.id) } });
+        await prisma.performanceReview.delete({ where: { id: Number(req.params.id) } });
         return res.status(200).json({ success: true, message: "Review deleted" });
     } catch (error) {
         console.error("DELETE REVIEW ERROR:", error);

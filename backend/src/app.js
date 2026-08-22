@@ -46,5 +46,6 @@ app.use("/api/v1/promotion/project-performance", projectPerformanceRoutes);
 app.use("/api/v1/promotion/experience",          employeeExperienceRoutes);
 // dayflow.promotion.config + dayflow.promotion.analysis
 app.use("/api/v1/promotion",                     promotionRoutes);
+app.use("/api/v1/salary-analysis", salaryAnalysisRoutes);
 
 export default app;

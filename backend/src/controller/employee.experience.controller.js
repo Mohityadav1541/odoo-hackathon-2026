@@ -33,7 +33,7 @@ export const upsertExperience = async (req, res) => {
 
         // ── Fetch the employee to reuse joiningDate ──
         const employee = await prisma.employee.findUnique({
-            where: { id: parseInt(employeeId) },
+            where: { id: Number(employeeId) },
             select: { id: true, joiningDate: true, firstName: true, lastName: true },
         });
 
@@ -58,7 +58,7 @@ export const upsertExperience = async (req, res) => {
         const prevYears = previousExperienceYears !== undefined ? parseFloat(previousExperienceYears) : 0;
 
         const record = await prisma.employeeExperience.upsert({
-            where: { employeeId: parseInt(employeeId) },
+            where: { employeeId: Number(employeeId) },
             update: {
                 currentRoleStartDate:    roleStart,
                 previousExperienceYears: prevYears,
@@ -66,7 +66,7 @@ export const upsertExperience = async (req, res) => {
                 yearsInCurrentRole,
             },
             create: {
-                employeeId:              parseInt(employeeId),
+                employeeId:              Number(employeeId),
                 currentRoleStartDate:    roleStart,
                 previousExperienceYears: prevYears,
                 yearsAtCompany,
@@ -97,7 +97,7 @@ export const upsertExperience = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const getExperience = async (req, res) => {
     try {
-        const employeeId = parseInt(req.params.employeeId);
+        const employeeId = Number(req.params.employeeId);
 
         const record = await prisma.employeeExperience.findUnique({
             where: { employeeId },
@@ -153,7 +153,7 @@ export const getExperience = async (req, res) => {
 // ─────────────────────────────────────────────────
 export const refreshExperienceDerivedFields = async (req, res) => {
     try {
-        const employeeId = parseInt(req.params.employeeId);
+        const employeeId = Number(req.params.employeeId);
 
         const record = await prisma.employeeExperience.findUnique({
             where: { employeeId },
