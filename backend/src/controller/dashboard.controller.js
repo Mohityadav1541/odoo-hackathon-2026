@@ -12,7 +12,7 @@ export const getEmployeeDashboard = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
-                employee: true
+                employee: { include: { salary: true } }
             }
         });
 
@@ -123,10 +123,10 @@ export const getEmployeeDashboard = async (req, res) => {
             hours: todayAttendance?.checkIn && todayAttendance?.checkOut ? 
                    ((new Date(todayAttendance.checkOut).getTime() - new Date(todayAttendance.checkIn).getTime()) / (1000 * 60 * 60)) : 
                    (todayAttendance?.checkIn ? ((new Date().getTime() - new Date(todayAttendance.checkIn).getTime()) / (1000 * 60 * 60)) : 0),
-            basicSalary: 0,
-            hra: 0,
-            allowances: 0,
-            deductions: 0
+            basicSalary: emp.salary?.basicSalary ? Number(emp.salary.basicSalary) : 0,
+            hra: emp.salary?.hra ? Number(emp.salary.hra) : 0,
+            allowances: emp.salary?.allowances ? Number(emp.salary.allowances) : 0,
+            deductions: emp.salary?.deductions ? Number(emp.salary.deductions) : 0
         };
 
         return res.status(200).json({
@@ -154,7 +154,7 @@ export const getAdminDashboard = async (req, res) => {
         // 1. Get all employees
         const users = await prisma.user.findMany({
             include: {
-                employee: true,
+                employee: { include: { salary: true } },
                 attendance: {
                     where: {
                         date: new Date(new Date().setHours(0, 0, 0, 0))
@@ -177,6 +177,10 @@ export const getAdminDashboard = async (req, res) => {
                 status: todayAtt ? todayAtt.status.toLowerCase().replace('_', '-') : "absent",
                 checkIn: todayAtt?.checkIn ? new Date(todayAtt.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--",
                 checkOut: todayAtt?.checkOut ? new Date(todayAtt.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--",
+                basicSalary: emp.salary?.basicSalary ? Number(emp.salary.basicSalary) : 0,
+                hra: emp.salary?.hra ? Number(emp.salary.hra) : 0,
+                allowances: emp.salary?.allowances ? Number(emp.salary.allowances) : 0,
+                deductions: emp.salary?.deductions ? Number(emp.salary.deductions) : 0
             };
         });
 
