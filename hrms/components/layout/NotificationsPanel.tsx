@@ -77,10 +77,15 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                 if (n.type === "danger" || n.type === "warning")
                   icon = <AlertCircle className="w-4 h-4 text-[#854F0B]" />;
 
-                return (
+                const content = (
                   <div
                     key={n.id}
-                    className={`p-3 rounded-xl border transition-all ${
+                    onClick={() => {
+                      if (n.link) {
+                        onClose(); // Close panel when navigating
+                      }
+                    }}
+                    className={`p-3 rounded-xl border transition-all ${n.link ? "cursor-pointer hover:border-[#4f45ba]" : ""} ${
                       n.isUnread
                         ? "bg-[#EEEDFE]/40 border-[#D8D6E9]"
                         : "bg-white border-[#ECEBF7]"
@@ -107,6 +112,12 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     </div>
                   </div>
                 );
+                
+                return n.link ? (
+                  <a href={n.link} key={n.id} className="block">
+                    {content}
+                  </a>
+                ) : content;
               })
             )}
           </div>

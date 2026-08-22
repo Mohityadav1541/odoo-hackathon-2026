@@ -57,6 +57,7 @@ export interface NotificationItem {
   isUnread: boolean;
   type: "info" | "success" | "warning" | "danger";
   targetRole?: "employee" | "admin" | "all";
+  link?: string;
 }
 
 export interface ToastItem {
@@ -291,6 +292,10 @@ const initialProjects: ProjectItem[] = [
     status: "In Progress",
     description: "Revamping the internal HRMS portal with a modern UI and improved UX.",
     progress: 65,
+    manager: "Alex Morgan",
+    managerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    deadline: "2026-10-15",
+    budget: "$45,000",
     tasks: [{ status: "completed" }, { status: "pending" }],
     team: [
       { id: "1", name: "Alex Morgan", role: "Lead", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
@@ -304,6 +309,10 @@ const initialProjects: ProjectItem[] = [
     status: "Planning",
     description: "Preparation for Q3 company-wide performance reviews and feedback cycles.",
     progress: 15,
+    manager: "Courtney Henry",
+    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    deadline: "2026-09-30",
+    budget: "$12,000",
     tasks: [{ status: "pending" }],
     team: [
       { id: "3", name: "Courtney Henry", role: "HR", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" }
@@ -362,7 +371,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "1", title: "Leave Request Submitted", message: "Your paid leave request for Aug 25-27 is under review.", timestamp: "10 mins ago", isUnread: true, type: "info", targetRole: "employee" },
+    { id: "1", title: "Project Suggestion Added", message: "Devon Lane added a suggestion to HRMS Portal Redesign.", timestamp: "10 mins ago", isUnread: true, type: "info", targetRole: "all", link: "/projects/PRJ-101" },
     { id: "2", title: "Payslip Available", message: "July 2026 payslip is ready for download.", timestamp: "2 hours ago", isUnread: true, type: "success", targetRole: "all" },
     { id: "3", title: "Policy Update", message: "Updated remote work guideline posted in company portal.", timestamp: "Yesterday", isUnread: false, type: "info", targetRole: "all" },
     { id: "4", title: "New Leave Application", message: "Devon Lane has applied for 2 days of sick leave.", timestamp: "1 hour ago", isUnread: true, type: "warning", targetRole: "admin" },
