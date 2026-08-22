@@ -1,16 +1,26 @@
-/**
- * API Service Layer
- * Interacts with the backend via the Next.js proxy configured in next.config.ts
- * (/api/ routes to http://localhost:5000/api/v1/)
- */
+import { applyLeaveApi, checkInApi, checkOutApi, generatePayrollApi, getAdminDashboardApi, getAttendanceHistoryApi, getEmployeeDashboardApi, getMyPayrollApi, getProfileApi, loginApi, signupApi, updateLeaveStatusApi, updateProfileApi, updateSalaryStructureApi } from './api';
+
+// Re-export existing API methods
+export {
+  applyLeaveApi,
+  checkInApi,
+  checkOutApi,
+  generatePayrollApi,
+  getAdminDashboardApi,
+  getAttendanceHistoryApi,
+  getEmployeeDashboardApi,
+  getMyPayrollApi,
+  getProfileApi,
+  loginApi,
+  signupApi,
+  updateLeaveStatusApi,
+  updateProfileApi,
+  updateSalaryStructureApi
+};
 
 const BASE_URL = '/api';
 
-/**
- * Helper function for handling JSON fetches
- */
 async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  // Try to get token from localStorage for authenticated requests
   let token = '';
   if (typeof window !== 'undefined') {
     token = localStorage.getItem('authToken') || '';
@@ -37,120 +47,33 @@ async function fetchApi(endpoint: string, options: RequestInit = {}) {
 }
 
 // ----------------------------------------------------
-// AUTHENTICATION
+// PROMOTION ENGINE (Steps 9 & 10)
 // ----------------------------------------------------
 
-export async function loginApi(employeeId: string, password: string) {
-  return fetchApi('/auth/login', {
+export async function runPromotionAnalysisApi(employeeId: number, evaluationPeriod: string) {
+  return fetchApi('/promotion/analysis/run', {
     method: 'POST',
-    body: JSON.stringify({ employeeId, password }),
+    body: JSON.stringify({ employeeId, evaluationPeriod }),
   });
 }
 
-export async function signupApi(employeeId: string, email: string, password: string, role?: string) {
-  return fetchApi('/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify({ employeeId, email, password, role }),
-  });
+export async function getAllAnalysesApi(period?: string, status?: string) {
+  let url = '/promotion/analysis';
+  const params = new URLSearchParams();
+  if (period) params.append('period', period);
+  if (status) params.append('status', status);
+  if (params.toString()) url += `?${params.toString()}`;
+  
+  return fetchApi(url, { method: 'GET' });
 }
 
-// ----------------------------------------------------
-// ATTENDANCE
-// ----------------------------------------------------
-
-export async function checkInApi(employeeId: string, password: string) {
-  return fetchApi('/attendance/check-in', {
-    method: 'POST',
-    body: JSON.stringify({ employeeId, password }),
-  });
+export async function getAnalysisByIdApi(id: number) {
+  return fetchApi(`/promotion/analysis/${id}`, { method: 'GET' });
 }
 
-export async function checkOutApi(employeeId: string, password: string) {
-  return fetchApi('/attendance/check-out', {
-    method: 'POST',
-    body: JSON.stringify({ employeeId, password }),
-  });
-}
-
-export async function getAttendanceHistoryApi(userId: number) {
-  // If the backend relies on JWT, userId isn't strictly needed in query if using `req.user.id`
-  // but it's supported by the API.
-  return fetchApi(`/attendance/history?userId=${userId}`, {
-    method: 'GET',
-  });
-}
-
-// ----------------------------------------------------
-// DASHBOARD
-// ----------------------------------------------------
-
-export async function getEmployeeDashboardApi() {
-  return fetchApi('/dashboard/me', {
-    method: 'GET',
-  });
-}
-
-export async function getAdminDashboardApi() {
-  return fetchApi('/dashboard/admin', {
-    method: 'GET',
-  });
-}
-
-// ----------------------------------------------------
-// PROFILE
-// ----------------------------------------------------
-
-export async function getProfileApi() {
-  return fetchApi('/profile', {
-    method: 'GET',
-  });
-}
-
-export async function updateProfileApi(data: any) {
-  return fetchApi('/profile', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-// ----------------------------------------------------
-// LEAVE
-// ----------------------------------------------------
-
-export async function applyLeaveApi(data: { type: string; startDate: string; endDate: string; remarks: string }) {
-  return fetchApi('/leave', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export async function updateLeaveStatusApi(id: string, status: 'APPROVED' | 'REJECTED', approvalComment?: string) {
-  return fetchApi(`/leave/${id}/status`, {
-    method: 'PUT',
-    body: JSON.stringify({ status, approvalComment }),
-  });
-}
-
-// ----------------------------------------------------
-// PAYROLL & SALARY
-// ----------------------------------------------------
-
-export async function getMyPayrollApi() {
-  return fetchApi('/payroll/me', {
-    method: 'GET',
-  });
-}
-
-export async function updateSalaryStructureApi(employeeId: string, data: { basicSalary: number, hra: number, allowances: number, deductions: number }) {
-  return fetchApi(`/payroll/salary-structure/${employeeId}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
-}
-
-export async function generatePayrollApi(month: number, year: number) {
-  return fetchApi('/payroll/generate', {
-    method: 'POST',
-    body: JSON.stringify({ month, year }),
+export async function updateHrDecisionApi(id: number, hrDecision: 'PENDING' | 'APPROVED' | 'DEFERRED' | 'REJECTED', hrComments: string) {
+  return fetchApi(`/promotion/analysis/${id}/decision`, {
+    method: 'PATCH',
+    body: JSON.stringify({ hrDecision, hrComments }),
   });
 }
