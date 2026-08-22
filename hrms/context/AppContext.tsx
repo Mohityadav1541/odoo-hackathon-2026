@@ -358,7 +358,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
 
   const [isCheckInModalOpen, setIsCheckInModalOpen] = useState(false);
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   const [leaveBalances, setLeaveBalances] = useState({
     paid: 8,
