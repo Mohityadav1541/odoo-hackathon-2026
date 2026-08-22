@@ -19,7 +19,7 @@ from psycopg2.extras import RealDictCursor
 from config import DATABASE_URL
 
 # Thread-safe connection pool (min=1, max=10 connections)
-_pool: pg_pool.ThreadedConnectionPool | None = None
+_pool: "pg_pool.ThreadedConnectionPool" = None
 
 
 def _get_pool() -> pg_pool.ThreadedConnectionPool:
