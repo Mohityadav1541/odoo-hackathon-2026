@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
-import { getProfileApi, updateProfileApi } from "@/services/api";
 import { AppShell } from "@/components/layout/AppShell";
 import { GreetingHeader } from "@/components/layout/GreetingHeader";
 import { ModalDrawer } from "@/components/ui/ModalDrawer";
@@ -23,10 +22,9 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { role, addToast } = useApp();
+  const { role, userProfile, updateUserProfile, addToast } = useApp();
   const [activeTab, setActiveTab] = useState<"personal" | "job" | "salary" | "documents">("personal");
-  const [profileData, setProfileData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const profileData = userProfile;
 
   // Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -38,24 +36,6 @@ export default function ProfilePage() {
     avatar: "",
     address: "",
   });
-
-  const fetchProfile = async () => {
-    try {
-      setIsLoading(true);
-      const res = await getProfileApi();
-      if (res.success) {
-        setProfileData(res.data);
-      }
-    } catch (error: any) {
-      addToast("Failed to load profile", error.message, "danger");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   const handleOpenEdit = () => {
     if (!profileData) return;
@@ -73,18 +53,14 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await updateProfileApi(editForm);
-      if (res.success) {
-        addToast("Profile Updated", "Changes saved successfully", "success");
-        setIsEditOpen(false);
-        fetchProfile(); // Refresh data
-      }
+      updateUserProfile(editForm);
+      setIsEditOpen(false);
     } catch (error: any) {
       addToast("Failed to update profile", error.message, "danger");
     }
   };
 
-  if (isLoading || !profileData) {
+  if (!profileData) {
     return (
       <AppShell>
         <div className="flex items-center justify-center h-64 text-[#8583A6]">
@@ -274,7 +250,7 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-[#2B2A45]">Verified Employee Documents</h3>
                 <div className="space-y-2">
-                  {profileData.documents.length === 0 ? (
+                  {!profileData.documents || profileData.documents.length === 0 ? (
                     <div className="text-xs text-[#8583A6] py-4">No documents found.</div>
                   ) : (
                     profileData.documents.map((doc: any, idx: number) => (

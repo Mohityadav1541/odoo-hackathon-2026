@@ -105,7 +105,7 @@ export default function AnalyticsReportsPage() {
               <line x1="0" y1="100" x2="500" y2="100" stroke="#ECEBF7" strokeDasharray="3 3" />
 
               {/* Bars for 2022 to 2026 */}
-              {fiveYearSalaryReports.slice().reverse().map((rep, idx) => {
+              {(fiveYearSalaryReports || []).slice().reverse().map((rep: any, idx: number) => {
                 const height = (rep.totalNetPaid / 350000) * 100;
                 const x = 30 + idx * 95;
                 const y = 110 - height;
@@ -158,7 +158,7 @@ export default function AnalyticsReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#ECEBF7] text-xs">
-                {fiveYearSalaryReports.map((rep) => (
+                {(fiveYearSalaryReports || []).map((rep: any) => (
                   <tr key={rep.year} className="hover:bg-[#FDFDFE] transition-colors">
                     <td className="py-3 px-3 font-semibold text-[#2B2A45]">{rep.year}</td>
                     <td className="py-3 px-3 font-mono text-[#2B2A45]">

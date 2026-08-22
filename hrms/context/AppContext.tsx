@@ -21,6 +21,8 @@ export interface EmployeeRecord {
   hra: number;
   allowances: number;
   deductions: number;
+  address?: string;
+  documents?: { name: string; size: string; date: string; }[];
 }
 
 export interface LeaveRequest {
@@ -54,6 +56,8 @@ export interface NotificationItem {
   timestamp: string;
   isUnread: boolean;
   type: "info" | "success" | "warning" | "danger";
+  targetRole?: "employee" | "admin" | "all";
+  link?: string;
 }
 
 export interface ToastItem {
@@ -80,7 +84,11 @@ export interface ProjectItem {
   status: "In Progress" | "Completed" | "Planning";
   description: string;
   progress: number;
-  tasks: { status: string }[];
+  manager?: string;
+  managerAvatar?: string;
+  deadline?: string;
+  budget?: string;
+  tasks: { id?: string; title?: string; status: string; assignedTo?: string; }[];
   team: { id: string; avatar: string; name: string; role: string }[];
 }
 
@@ -111,6 +119,10 @@ interface AppContextType {
   // Employee Directory
   employees: EmployeeRecord[];
   updateEmployeeSalary: (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => void;
+  addEmployee: (data: any) => void;
+
+  // Reports
+  fiveYearSalaryReports?: any[];
 
   // Payroll
   payslips: PayslipItem[];
@@ -122,7 +134,7 @@ interface AppContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   signup: (empId: string, email: string, pass: string, role?: string) => Promise<boolean>;
   logout: () => void;
-  fetchDashboardData: (currentRole?: string) => Promise<void>;
+  fetchDashboardData: (currentRole?: Role) => Promise<void>;
   isLoadingDashboard: boolean;
 
   // Notifications & Toasts
@@ -280,6 +292,10 @@ const initialProjects: ProjectItem[] = [
     status: "In Progress",
     description: "Revamping the internal HRMS portal with a modern UI and improved UX.",
     progress: 65,
+    manager: "Alex Morgan",
+    managerAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    deadline: "2026-10-15",
+    budget: "$45,000",
     tasks: [{ status: "completed" }, { status: "pending" }],
     team: [
       { id: "1", name: "Alex Morgan", role: "Lead", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
@@ -293,11 +309,23 @@ const initialProjects: ProjectItem[] = [
     status: "Planning",
     description: "Preparation for Q3 company-wide performance reviews and feedback cycles.",
     progress: 15,
+    manager: "Courtney Henry",
+    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    deadline: "2026-09-30",
+    budget: "$12,000",
     tasks: [{ status: "pending" }],
     team: [
       { id: "3", name: "Courtney Henry", role: "HR", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" }
     ]
   }
+];
+
+const initialFiveYearSalaryReports = [
+  { year: 2026, totalGross: 350000, totalDeductions: 50000, totalNetPaid: 300000, avgEmployeeSalary: 60000, headcount: 5, growthRate: "+12%" },
+  { year: 2025, totalGross: 320000, totalDeductions: 45000, totalNetPaid: 275000, avgEmployeeSalary: 55000, headcount: 5, growthRate: "+10%" },
+  { year: 2024, totalGross: 290000, totalDeductions: 40000, totalNetPaid: 250000, avgEmployeeSalary: 50000, headcount: 5, growthRate: "+9%" },
+  { year: 2023, totalGross: 265000, totalDeductions: 35000, totalNetPaid: 230000, avgEmployeeSalary: 46000, headcount: 5, growthRate: "+11%" },
+  { year: 2022, totalGross: 240000, totalDeductions: 30000, totalNetPaid: 210000, avgEmployeeSalary: 42000, headcount: 5, growthRate: "+8%" },
 ];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -328,6 +356,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [employees, setEmployees] = useState<EmployeeRecord[]>(initialEmployees);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaves);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [fiveYearSalaryReports, setFiveYearSalaryReports] = useState<any[]>(initialFiveYearSalaryReports);
 
   const [leaveBalances, setLeaveBalances] = useState({
     paid: 8,
@@ -342,13 +371,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "1", title: "Leave Request Submitted", message: "Your paid leave request for Aug 25-27 is under review.", timestamp: "10 mins ago", isUnread: true, type: "info" },
-    { id: "2", title: "Payslip Available", message: "July 2026 payslip is ready for download.", timestamp: "2 hours ago", isUnread: true, type: "success" },
-    { id: "3", title: "Policy Update", message: "Updated remote work guideline posted in company portal.", timestamp: "Yesterday", isUnread: false, type: "info" },
+    { id: "1", title: "Project Suggestion Added", message: "Devon Lane added a suggestion to HRMS Portal Redesign.", timestamp: "10 mins ago", isUnread: true, type: "info", targetRole: "all", link: "/projects/PRJ-101" },
+    { id: "2", title: "Payslip Available", message: "July 2026 payslip is ready for download.", timestamp: "2 hours ago", isUnread: true, type: "success", targetRole: "all" },
+    { id: "3", title: "Policy Update", message: "Updated remote work guideline posted in company portal.", timestamp: "Yesterday", isUnread: false, type: "info", targetRole: "all" },
+    { id: "4", title: "New Leave Application", message: "Devon Lane has applied for 2 days of sick leave.", timestamp: "1 hour ago", isUnread: true, type: "warning", targetRole: "admin" },
+    { id: "5", title: "Pending Onboarding", message: "You have 1 pending document verification for a new employee.", timestamp: "4 hours ago", isUnread: false, type: "info", targetRole: "admin" },
   ]);
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [quickSettings, setQuickSettings] = useState({ emailAlerts: true, autoCheckIn: false });
+  // Quick settings state initialized with localStorage support
+  const [quickSettings, setQuickSettings] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("quickSettings");
+      if (saved) return JSON.parse(saved);
+    }
+    return { emailAlerts: true, autoCheckIn: false };
+  });
 
   const toggleRole = () => {
     const next = role === "employee" ? "admin" : "employee";
@@ -390,9 +428,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUserProfile(res.data.userProfile);
           setWeeklyAttendance(res.data.weeklyAttendance);
           setLeaveRequests(res.data.leaveRequests);
-          setIsCheckedIn(res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day");
+          
+          const isPresent = res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day";
+          setIsCheckedIn(isPresent);
           setCheckInTime(res.data.userProfile.checkIn !== "--:--" ? res.data.userProfile.checkIn : null);
           setTodayHours(res.data.userProfile.hours || 0);
+
+          // AUTO CHECK-IN LOGIC
+          if (!isPresent && quickSettings.autoCheckIn) {
+            setTimeout(async () => {
+              addToast("Office WiFi Detected", "Simulating connection to Corporate Network...", "info");
+              
+              setTimeout(async () => {
+                const empId = localStorage.getItem("demo_empId") || "EMP001";
+                const pass = localStorage.getItem("demo_pass") || "password123";
+                try {
+                  await checkInApi(empId, pass);
+                  setIsCheckedIn(true);
+                  setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                  addToast("Auto Checked In", "Automatically punched in via Office WiFi", "success");
+                } catch (error: any) {
+                  // Fallback for mock if DB fails
+                  setIsCheckedIn(true);
+                  setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                  addToast("Auto Checked In (Mock)", "Automatically punched in via Office WiFi", "success");
+                }
+              }, 1500);
+            }, 500);
+          }
         }
         
         if (payrollRes && payrollRes.success) {
@@ -533,6 +596,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addEmployee = (data: any) => {
+    addToast("Employee Added", "Mock employee added.", "success");
+  };
+
   const generateBatchPayslips = async () => {
     try {
       const date = new Date();
@@ -552,7 +619,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleQuickSetting = (setting: "emailAlerts" | "autoCheckIn") => {
-    setQuickSettings((prev) => ({ ...prev, [setting]: !prev[setting] }));
+    setQuickSettings((prev: any) => {
+      const nextSettings = { ...prev, [setting]: !prev[setting] };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("quickSettings", JSON.stringify(nextSettings));
+      }
+      return nextSettings;
+    });
     addToast("Setting Updated", `${setting} is now ${!quickSettings[setting] ? "ON" : "OFF"}`, "info");
   };
 
@@ -577,9 +650,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rejectLeave,
         employees,
         updateEmployeeSalary,
+        addEmployee,
         payslips,
         generateBatchPayslips,
         projects,
+        fiveYearSalaryReports,
         notifications,
         markAllNotificationsRead,
         toasts,

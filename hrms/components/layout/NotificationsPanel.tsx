@@ -13,7 +13,11 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { notifications, markAllNotificationsRead } = useApp();
+  const { notifications, markAllNotificationsRead, role } = useApp();
+
+  const filteredNotifications = notifications.filter(
+    (n) => !n.targetRole || n.targetRole === "all" || n.targetRole === role
+  );
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -40,7 +44,7 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-medium text-[#2B2A45]">Notifications</h2>
               <span className="bg-[#EEEDFE] text-[#4f45ba] text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                {notifications.filter((n) => n.isUnread).length} new
+                {filteredNotifications.filter((n) => n.isUnread).length} new
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -62,21 +66,26 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
 
           {/* List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {notifications.length === 0 ? (
+            {filteredNotifications.length === 0 ? (
               <div className="text-center py-12 text-xs text-[#8583A6]">
                 No notifications right now.
               </div>
             ) : (
-              notifications.map((n) => {
+              filteredNotifications.map((n) => {
                 let icon = <Info className="w-4 h-4 text-[#4f45ba]" />;
                 if (n.type === "success") icon = <CheckCircle2 className="w-4 h-4 text-[#085041]" />;
                 if (n.type === "danger" || n.type === "warning")
                   icon = <AlertCircle className="w-4 h-4 text-[#854F0B]" />;
 
-                return (
+                const content = (
                   <div
                     key={n.id}
-                    className={`p-3 rounded-xl border transition-all ${
+                    onClick={() => {
+                      if (n.link) {
+                        onClose(); // Close panel when navigating
+                      }
+                    }}
+                    className={`p-3 rounded-xl border transition-all ${n.link ? "cursor-pointer hover:border-[#4f45ba]" : ""} ${
                       n.isUnread
                         ? "bg-[#EEEDFE]/40 border-[#D8D6E9]"
                         : "bg-white border-[#ECEBF7]"
@@ -103,6 +112,12 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     </div>
                   </div>
                 );
+                
+                return n.link ? (
+                  <a href={n.link} key={n.id} className="block">
+                    {content}
+                  </a>
+                ) : content;
               })
             )}
           </div>

@@ -50,11 +50,17 @@ export const updateSalaryStructure = async (req, res) => {
             return res.status(403).json({ success: false, message: "Forbidden. Admin access required." });
         }
 
-        let numericId = parseInt(employeeId);
-        if (isNaN(numericId) && employeeId.startsWith('EMP-')) {
-            // Frontend passes "EMP-1001", but DB employee.id is likely 1
-            numericId = parseInt(employeeId.replace('EMP-100', '')); // quick hack to convert EMP-1001 to 1
+        // Look up the actual employee numeric ID using the string employeeId (e.g., EMP001)
+        const user = await prisma.user.findUnique({
+            where: { employeeId: employeeId },
+            include: { employee: true }
+        });
+
+        if (!user || !user.employee) {
+            return res.status(404).json({ success: false, message: "Employee not found." });
         }
+
+        const numericId = user.employee.id;
 
         // Calculate gross and net
         const basic = parseFloat(basicSalary || 0);
