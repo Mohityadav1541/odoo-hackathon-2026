@@ -80,7 +80,11 @@ export interface ProjectItem {
   status: "In Progress" | "Completed" | "Planning";
   description: string;
   progress: number;
-  tasks: { status: string }[];
+  manager?: string;
+  managerAvatar?: string;
+  deadline?: string;
+  budget?: string;
+  tasks: { id?: string; title?: string; status: string; assignedTo?: string; }[];
   team: { id: string; avatar: string; name: string; role: string }[];
 }
 
@@ -111,6 +115,10 @@ interface AppContextType {
   // Employee Directory
   employees: EmployeeRecord[];
   updateEmployeeSalary: (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => void;
+  addEmployee: (data: any) => void;
+
+  // Reports
+  fiveYearSalaryReports?: any[];
 
   // Payroll
   payslips: PayslipItem[];
@@ -122,7 +130,7 @@ interface AppContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   signup: (empId: string, email: string, pass: string, role?: string) => Promise<boolean>;
   logout: () => void;
-  fetchDashboardData: (currentRole?: string) => Promise<void>;
+  fetchDashboardData: (currentRole?: Role) => Promise<void>;
   isLoadingDashboard: boolean;
 
   // Notifications & Toasts
@@ -348,7 +356,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [quickSettings, setQuickSettings] = useState({ emailAlerts: true, autoCheckIn: false });
+  // Quick settings state initialized with localStorage support
+  const [quickSettings, setQuickSettings] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("quickSettings");
+      if (saved) return JSON.parse(saved);
+    }
+    return { emailAlerts: true, autoCheckIn: false };
+  });
 
   const toggleRole = () => {
     const next = role === "employee" ? "admin" : "employee";
@@ -390,9 +405,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUserProfile(res.data.userProfile);
           setWeeklyAttendance(res.data.weeklyAttendance);
           setLeaveRequests(res.data.leaveRequests);
-          setIsCheckedIn(res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day");
+          
+          const isPresent = res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day";
+          setIsCheckedIn(isPresent);
           setCheckInTime(res.data.userProfile.checkIn !== "--:--" ? res.data.userProfile.checkIn : null);
           setTodayHours(res.data.userProfile.hours || 0);
+
+          // AUTO CHECK-IN LOGIC
+          if (!isPresent && quickSettings.autoCheckIn) {
+            setTimeout(async () => {
+              addToast("Office WiFi Detected", "Simulating connection to Corporate Network...", "info");
+              
+              setTimeout(async () => {
+                const empId = localStorage.getItem("demo_empId") || "EMP001";
+                const pass = localStorage.getItem("demo_pass") || "password123";
+                try {
+                  await checkInApi(empId, pass);
+                  setIsCheckedIn(true);
+                  setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                  addToast("Auto Checked In", "Automatically punched in via Office WiFi", "success");
+                } catch (error: any) {
+                  // Fallback for mock if DB fails
+                  setIsCheckedIn(true);
+                  setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                  addToast("Auto Checked In (Mock)", "Automatically punched in via Office WiFi", "success");
+                }
+              }, 1500);
+            }, 500);
+          }
         }
         
         if (payrollRes && payrollRes.success) {
@@ -533,6 +573,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addEmployee = (data: any) => {
+    addToast("Employee Added", "Mock employee added.", "success");
+  };
+
   const generateBatchPayslips = async () => {
     try {
       const date = new Date();
@@ -552,7 +596,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleQuickSetting = (setting: "emailAlerts" | "autoCheckIn") => {
-    setQuickSettings((prev) => ({ ...prev, [setting]: !prev[setting] }));
+    setQuickSettings((prev: any) => {
+      const nextSettings = { ...prev, [setting]: !prev[setting] };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("quickSettings", JSON.stringify(nextSettings));
+      }
+      return nextSettings;
+    });
     addToast("Setting Updated", `${setting} is now ${!quickSettings[setting] ? "ON" : "OFF"}`, "info");
   };
 
@@ -577,6 +627,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rejectLeave,
         employees,
         updateEmployeeSalary,
+        addEmployee,
         payslips,
         generateBatchPayslips,
         projects,
