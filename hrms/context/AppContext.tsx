@@ -1,14 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { loginApi, signupApi, checkInApi, checkOutApi, getEmployeeDashboardApi, getAdminDashboardApi, applyLeaveApi, updateLeaveStatusApi } from "../services/api";
 
 export type Role = "employee" | "admin";
-
-export interface EmployeeDocument {
-  name: string;
-  size: string;
-  date: string;
-}
 
 export interface EmployeeRecord {
   id: string;
@@ -26,7 +21,6 @@ export interface EmployeeRecord {
   hra: number;
   allowances: number;
   deductions: number;
-  documents?: EmployeeDocument[];
 }
 
 export interface LeaveRequest {
@@ -79,38 +73,6 @@ export interface PayslipItem {
   issuedDate: string;
 }
 
-export interface ProjectTask {
-  id: string;
-  title: string;
-  assignedTo: string;
-  status: "completed" | "in-progress" | "todo";
-}
-
-export interface ProjectItem {
-  id: string;
-  title: string;
-  department: string;
-  manager: string;
-  managerAvatar: string;
-  progress: number;
-  deadline: string;
-  status: "In Progress" | "Completed" | "Planning" | "On Hold";
-  description: string;
-  team: { id: string; name: string; role: string; avatar: string }[];
-  tasks: ProjectTask[];
-  budget: string;
-}
-
-export interface YearlySalaryReport {
-  year: number;
-  totalGross: number;
-  totalDeductions: number;
-  totalNetPaid: number;
-  avgEmployeeSalary: number;
-  headcount: number;
-  growthRate: string;
-}
-
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -118,7 +80,6 @@ interface AppContextType {
 
   // Profile
   userProfile: EmployeeRecord;
-  setUserProfile: (profile: EmployeeRecord) => void;
   updateUserProfile: (data: Partial<EmployeeRecord>) => void;
 
   // Attendance & Check-in
@@ -138,12 +99,17 @@ interface AppContextType {
 
   // Employee Directory
   employees: EmployeeRecord[];
-  addEmployee: (emp: Omit<EmployeeRecord, "id">) => void;
   updateEmployeeSalary: (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => void;
 
   // Payroll
   payslips: PayslipItem[];
   generateBatchPayslips: () => void;
+
+  login: (email: string, pass: string) => Promise<boolean>;
+  signup: (empId: string, email: string, pass: string, role?: string) => Promise<boolean>;
+  logout: () => void;
+  fetchDashboardData: (currentRole?: string) => Promise<void>;
+  isLoadingDashboard: boolean;
 
   // Notifications & Toasts
   notifications: NotificationItem[];
@@ -155,12 +121,6 @@ interface AppContextType {
   // Quick settings
   quickSettings: { emailAlerts: boolean; autoCheckIn: boolean };
   toggleQuickSetting: (setting: "emailAlerts" | "autoCheckIn") => void;
-
-  // Projects Module
-  projects: ProjectItem[];
-
-  // 5-Year Salary Reports
-  fiveYearSalaryReports: YearlySalaryReport[];
 
   // Navigation search term
   searchTerm: string;
@@ -298,101 +258,6 @@ const initialLeaves: LeaveRequest[] = [
   },
 ];
 
-const initialProjects: ProjectItem[] = [
-  {
-    id: "PRJ-101",
-    title: "Odoo HRMS Engine Integration",
-    department: "Engineering",
-    manager: "Courtney Henry",
-    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    progress: 78,
-    deadline: "Sep 30, 2026",
-    status: "In Progress",
-    budget: "$45,000",
-    description: "Building standalone Next.js HRMS frontend wired to Odoo JSON-RPC/REST backend endpoints.",
-    team: [
-      { id: "EMP-1001", name: "Alex Morgan", role: "Senior UX Designer", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
-      { id: "EMP-1002", name: "Devon Lane", role: "Frontend Engineer", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
-      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
-    ],
-    tasks: [
-      { id: "TSK-1", title: "Implement Odoo JSON-RPC authentication adapter", assignedTo: "Robert Fox", status: "completed" },
-      { id: "TSK-2", title: "Design responsive sidebar & dashboard cards", assignedTo: "Alex Morgan", status: "completed" },
-      { id: "TSK-3", title: "Wire attendance check-in endpoints to hr.attendance", assignedTo: "Devon Lane", status: "in-progress" },
-      { id: "TSK-4", title: "Conduct end-to-end integration testing", assignedTo: "Devon Lane", status: "todo" },
-    ],
-  },
-  {
-    id: "PRJ-102",
-    title: "Mobile App Redesign (iOS & Android)",
-    department: "Design & Product",
-    manager: "Arlene McCoy",
-    managerAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-    progress: 45,
-    deadline: "Oct 15, 2026",
-    status: "In Progress",
-    budget: "$32,000",
-    description: "Revamping native mobile app experience for self-service attendance, leave applications, and push notifications.",
-    team: [
-      { id: "EMP-1001", name: "Alex Morgan", role: "Senior UX Designer", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
-      { id: "EMP-1005", name: "Arlene McCoy", role: "Product Manager", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" },
-    ],
-    tasks: [
-      { id: "TSK-10", title: "Complete Mobile UI Figma wireframes", assignedTo: "Alex Morgan", status: "completed" },
-      { id: "TSK-11", title: "React Native component library setup", assignedTo: "Alex Morgan", status: "in-progress" },
-      { id: "TSK-12", title: "Push notification push relay server", assignedTo: "Arlene McCoy", status: "todo" },
-    ],
-  },
-  {
-    id: "PRJ-103",
-    title: "AI Facial Recognition Attendance Scanner",
-    department: "Engineering",
-    manager: "Robert Fox",
-    managerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    progress: 100,
-    deadline: "Aug 01, 2026",
-    status: "Completed",
-    budget: "$28,000",
-    description: "Automated kiosk-based facial recognition check-in for physical office entry points.",
-    team: [
-      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
-      { id: "EMP-1002", name: "Devon Lane", role: "Frontend Engineer", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
-    ],
-    tasks: [
-      { id: "TSK-20", title: "Train OpenCV facial detection model", assignedTo: "Robert Fox", status: "completed" },
-      { id: "TSK-21", title: "Deploy kiosk hardware units to SF & NYC offices", assignedTo: "Devon Lane", status: "completed" },
-    ],
-  },
-  {
-    id: "PRJ-104",
-    title: "Cloud Infrastructure & Compliance Migration",
-    department: "Human Resources",
-    manager: "Courtney Henry",
-    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-    progress: 20,
-    deadline: "Nov 30, 2026",
-    status: "Planning",
-    budget: "$50,000",
-    description: "Migrating HR database and document repositories to SOC2 Type II compliant cloud vault.",
-    team: [
-      { id: "EMP-1003", name: "Courtney Henry", role: "HR Specialist", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" },
-      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
-    ],
-    tasks: [
-      { id: "TSK-30", title: "Audit security & data privacy compliance", assignedTo: "Courtney Henry", status: "in-progress" },
-      { id: "TSK-31", title: "DB encryption at rest implementation", assignedTo: "Robert Fox", status: "todo" },
-    ],
-  },
-];
-
-const initialFiveYearSalaryReports: YearlySalaryReport[] = [
-  { year: 2026, totalGross: 340000, totalDeductions: 22200, totalNetPaid: 317800, avgEmployeeSalary: 68000, headcount: 5, growthRate: "+8.5%" },
-  { year: 2025, totalGross: 312000, totalDeductions: 20400, totalNetPaid: 291600, avgEmployeeSalary: 62400, headcount: 5, growthRate: "+12.1%" },
-  { year: 2024, totalGross: 278000, totalDeductions: 18200, totalNetPaid: 259800, avgEmployeeSalary: 55600, headcount: 5, growthRate: "+10.3%" },
-  { year: 2023, totalGross: 245000, totalDeductions: 15900, totalNetPaid: 229100, avgEmployeeSalary: 49000, headcount: 5, growthRate: "+14.0%" },
-  { year: 2022, totalGross: 210000, totalDeductions: 13600, totalNetPaid: 196400, avgEmployeeSalary: 42000, headcount: 5, growthRate: "Baseline" },
-];
-
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -407,7 +272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [checkInTime, setCheckInTime] = useState<string | null>("09:02 AM");
   const [todayHours, setTodayHours] = useState(5.5);
 
-  const [weeklyAttendance] = useState<AttendanceDay[]>([
+  const [weeklyAttendance, setWeeklyAttendance] = useState<AttendanceDay[]>([
     { day: "Mon", date: "Aug 18", status: "present", checkIn: "08:58 AM", checkOut: "05:30 PM", hoursWorked: 8.5 },
     { day: "Tue", date: "Aug 19", status: "present", checkIn: "09:05 AM", checkOut: "05:45 PM", hoursWorked: 8.6 },
     { day: "Wed", date: "Aug 20", status: "half-day", checkIn: "09:15 AM", checkOut: "01:30 PM", hoursWorked: 4.2 },
@@ -419,6 +284,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [employees, setEmployees] = useState<EmployeeRecord[]>(initialEmployees);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaves);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
 
   const [leaveBalances, setLeaveBalances] = useState({
     paid: 8,
@@ -464,51 +330,147 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast("Profile updated successfully", "Your personal details have been saved.", "success");
   };
 
-  const toggleCheckIn = () => {
+  const fetchDashboardData = async (currentRole = role) => {
+    setIsLoadingDashboard(true);
+    try {
+      if (currentRole === "admin") {
+        const res = await getAdminDashboardApi();
+        if (res.success) {
+          setEmployees(res.data.employees);
+          setLeaveRequests(res.data.pendingLeaves);
+        }
+      } else {
+        const res = await getEmployeeDashboardApi();
+        if (res.success) {
+          setUserProfile(res.data.userProfile);
+          setWeeklyAttendance(res.data.weeklyAttendance);
+          setLeaveRequests(res.data.leaveRequests);
+          setPayslips(res.data.payslips);
+          setIsCheckedIn(res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day");
+          setCheckInTime(res.data.userProfile.checkIn !== "--:--" ? res.data.userProfile.checkIn : null);
+          setTodayHours(res.data.userProfile.hours || 0);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+    } finally {
+      setIsLoadingDashboard(false);
+    }
+  };
+
+  const login = async (empId: string, pass: string) => {
+    try {
+      const res = await loginApi(empId, pass);
+      if (res.success) {
+        localStorage.setItem("demo_empId", empId);
+        localStorage.setItem("demo_pass", pass);
+        localStorage.setItem("authToken", res.token);
+        
+        const backendRole = res.user?.role === "ADMIN" ? "admin" : "employee";
+        setRole(backendRole);
+        
+        // Fetch real data right after login
+        await fetchDashboardData(backendRole);
+
+        addToast("Signed in successfully", "Welcome back!", "success");
+        return true;
+      }
+      throw new Error(res.message || "Invalid credentials");
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const signup = async (empId: string, email: string, pass: string, role?: string) => {
+    try {
+      const res = await signupApi(empId, email, pass, role);
+      if (res.success) {
+        addToast("Account created successfully", "Please sign in.", "success");
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      addToast("Sign Up Failed", error.message || "Could not create account", "danger");
+      return false;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("demo_empId");
+    localStorage.removeItem("demo_pass");
+    localStorage.removeItem("authToken");
+    setIsCheckedIn(false);
+    setCheckInTime(null);
+  };
+
+  const toggleCheckIn = async () => {
+    const empId = localStorage.getItem("demo_empId") || "EMP001";
+    const pass = localStorage.getItem("demo_pass") || "password123";
+
     if (isCheckedIn) {
-      setIsCheckedIn(false);
-      addToast("Checked Out", "Workday ended at " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), "warning");
+      try {
+        await checkOutApi(empId, pass);
+        setIsCheckedIn(false);
+        addToast("Checked Out", "Workday ended at " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), "warning");
+      } catch (error: any) {
+        // Fallback for demo when DB is down
+        setIsCheckedIn(false);
+        addToast("Checked Out (Mock - DB Error)", error.message, "warning");
+      }
     } else {
-      setIsCheckedIn(true);
-      setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      addToast("Checked In", "Have a productive day, Alex!", "success");
+      try {
+        const res = await checkInApi(empId, pass);
+        setIsCheckedIn(true);
+        setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        addToast("Checked In", "Have a productive day!", "success");
+      } catch (error: any) {
+        // Fallback for demo when DB is down
+        setIsCheckedIn(true);
+        setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        addToast("Checked In (Mock - DB Error)", error.message, "warning");
+      }
     }
   };
 
-  const applyForLeave = (req: Omit<LeaveRequest, "id" | "employeeId" | "employeeName" | "employeeAvatar" | "status" | "appliedDate">) => {
-    const newReq: LeaveRequest = {
-      ...req,
-      id: "LR-" + Math.floor(100 + Math.random() * 900),
-      employeeId: userProfile.id,
-      employeeName: userProfile.name,
-      employeeAvatar: userProfile.avatar,
-      status: "pending",
-      appliedDate: new Date().toISOString().split("T")[0],
-    };
-    setLeaveRequests((prev) => [newReq, ...prev]);
-
-    // Update balance
-    if (req.type === "Paid Leave") {
-      setLeaveBalances((prev) => ({ ...prev, paid: Math.max(0, prev.paid - req.days) }));
-    } else if (req.type === "Sick Leave") {
-      setLeaveBalances((prev) => ({ ...prev, sick: Math.max(0, prev.sick - req.days) }));
+  const applyForLeave = async (req: Omit<LeaveRequest, "id" | "employeeId" | "employeeName" | "employeeAvatar" | "status" | "appliedDate">) => {
+    try {
+      const res = await applyLeaveApi({
+        type: req.type,
+        startDate: req.startDate,
+        endDate: req.endDate,
+        remarks: req.remarks || "",
+      });
+      if (res.success) {
+        addToast("Leave applied successfully", "Your request is pending HR approval.", "success");
+        await fetchDashboardData(); // Refresh the data!
+      }
+    } catch (error: any) {
+      addToast("Failed to apply for leave", error.message, "danger");
     }
-
-    addToast("Leave Application Submitted", `Requested ${req.days} day(s) of ${req.type}.`, "success");
   };
 
-  const approveLeave = (id: string) => {
-    setLeaveRequests((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, status: "approved" as const } : l))
-    );
-    addToast("Leave Approved", `Request #${id} marked as approved.`, "success");
+  const approveLeave = async (id: string) => {
+    try {
+      const res = await updateLeaveStatusApi(id, 'APPROVED');
+      if (res.success) {
+        addToast("Leave Approved", `Request ${id} has been approved.`, "success");
+        await fetchDashboardData(); // Refresh to remove it from the pending list
+      }
+    } catch (error: any) {
+      addToast("Failed to approve leave", error.message, "danger");
+    }
   };
 
-  const rejectLeave = (id: string, comment: string) => {
-    setLeaveRequests((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, status: "rejected" as const, rejectComment: comment } : l))
-    );
-    addToast("Leave Rejected", `Request #${id} rejected with feedback.`, "danger");
+  const rejectLeave = async (id: string, comment: string) => {
+    try {
+      const res = await updateLeaveStatusApi(id, 'REJECTED', comment);
+      if (res.success) {
+        addToast("Leave Rejected", `Request ${id} has been rejected.`, "danger");
+        await fetchDashboardData(); // Refresh to remove it from the pending list
+      }
+    } catch (error: any) {
+      addToast("Failed to reject leave", error.message, "danger");
+    }
   };
 
   const updateEmployeeSalary = (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => {
@@ -516,12 +478,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((e) => (e.id === id ? { ...e, ...salary } : e))
     );
     addToast("Salary Structure Saved", `Salary details updated for ${id}.`, "success");
-  };
-
-  const addEmployee = (emp: Omit<EmployeeRecord, "id">) => {
-    const newId = `EMP-${1000 + employees.length + 1}`;
-    setEmployees((prev) => [{ ...emp, id: newId }, ...prev]);
-    addToast("Employee Added", `${emp.name} has been added to the directory.`, "success");
   };
 
   const generateBatchPayslips = () => {
@@ -555,7 +511,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setRole,
         toggleRole,
         userProfile,
-        setUserProfile,
         updateUserProfile,
         isCheckedIn,
         checkInTime,
@@ -569,7 +524,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         approveLeave,
         rejectLeave,
         employees,
-        addEmployee,
         updateEmployeeSalary,
         payslips,
         generateBatchPayslips,
@@ -580,10 +534,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeToast,
         quickSettings,
         toggleQuickSetting,
-        projects: initialProjects,
-        fiveYearSalaryReports: initialFiveYearSalaryReports,
         searchTerm,
         setSearchTerm,
+        login,
+        signup,
+        logout,
+        fetchDashboardData,
+        isLoadingDashboard,
       }}
     >
       {children}

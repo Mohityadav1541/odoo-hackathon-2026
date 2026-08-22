@@ -9,46 +9,38 @@ import { useApp } from "@/context/AppContext";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { role, setRole, addToast, employees, setUserProfile } = useApp();
+  const { setRole, addToast, login } = useApp();
 
-  const [email, setEmail] = useState("alex.morgan@dayflow.hr");
-  const [password, setPassword] = useState("password123");
-  const [selectedRole, setSelectedRole] = useState<"employee" | "admin">("employee");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorBanner("Please fill in both email and password.");
+      setErrorBanner("Please fill in both Employee ID/Email and password.");
       return;
     }
 
     setErrorBanner(null);
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const success = await login(email, password);
       setIsLoading(false);
-      // Auto detect HR vs Employee from email credential
-      const isHr = email.toLowerCase().includes("courtney") || email.toLowerCase().includes("admin") || email.toLowerCase().includes("hr");
-      const targetRole = isHr ? "admin" : "employee";
       
-      let match = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
-      if (!match) {
-        match = isHr ? (employees.find(e => e.role.toLowerCase().includes("hr")) || employees[0]) : employees[0];
+      if (success) {
+        router.push("/");
       }
-      
-      setUserProfile(match);
-      setRole(targetRole);
-      addToast(
-        "Signed in successfully",
-        `Welcome back to Dayflow ${targetRole === "admin" ? "Admin / HR" : "Employee"} Workspace!`,
-        "success"
-      );
-      router.push(targetRole === "admin" ? "/admin" : "/");
-    }, 600);
+    } catch (error: any) {
+      setIsLoading(false);
+      setErrorBanner(error.message || "Invalid credentials");
+    }
   };
+
+
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F4F3FB] font-sans antialiased text-[#2B2A45]">
@@ -91,6 +83,7 @@ export default function SignInPage() {
             <p className="text-xs text-[#8583A6] mt-1">Enter your credentials to access your account</p>
           </div>
 
+
           {/* Error Banner */}
           {errorBanner && (
             <div className="mb-4 p-3 bg-[#FCEBEB] border border-[#FCEBEB] rounded-lg text-xs text-[#791F1F] flex items-center gap-2">
@@ -100,14 +93,13 @@ export default function SignInPage() {
           )}
 
           <form onSubmit={handleSignIn} className="space-y-4">
-
             {/* Email Field */}
-            <FormFieldSet label="Work Email Address">
+            <FormFieldSet label="Employee ID (or Email)">
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.hr"
+                placeholder="EMP001"
                 className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] placeholder-[#9C9AB8] focus:outline-none focus:border-[#4f45ba] focus:ring-2 focus:ring-[#EEEDFE] transition-all"
               />
             </FormFieldSet>

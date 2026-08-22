@@ -79,3 +79,54 @@ export async function getAttendanceHistoryApi(userId: number) {
     method: 'GET',
   });
 }
+
+// ----------------------------------------------------
+// DASHBOARD
+// ----------------------------------------------------
+
+export async function getEmployeeDashboardApi() {
+  return fetchApi('/dashboard/me', {
+    method: 'GET',
+  });
+}
+
+export async function getAdminDashboardApi() {
+  return fetchApi('/dashboard/admin', {
+    method: 'GET',
+  });
+}
+
+// ----------------------------------------------------
+// PROFILE
+// ----------------------------------------------------
+
+export async function getProfileApi() {
+  return fetchApi('/profile', {
+    method: 'GET',
+  });
+}
+
+export async function updateProfileApi(data: any) {
+  return fetchApi('/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+// ----------------------------------------------------
+// LEAVE
+// ----------------------------------------------------
+
+export async function applyLeaveApi(data: { type: string; startDate: string; endDate: string; remarks: string }) {
+  return fetchApi('/leave', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateLeaveStatusApi(id: string, status: 'APPROVED' | 'REJECTED', approvalComment?: string) {
+  return fetchApi(`/leave/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, approvalComment }),
+  });
+}

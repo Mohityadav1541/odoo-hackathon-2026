@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
+import { getProfileApi, updateProfileApi } from "@/services/api";
 import { AppShell } from "@/components/layout/AppShell";
 import { GreetingHeader } from "@/components/layout/GreetingHeader";
 import { ModalDrawer } from "@/components/ui/ModalDrawer";
@@ -22,43 +23,82 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { userProfile, updateUserProfile, role } = useApp();
+  const { role, addToast } = useApp();
   const [activeTab, setActiveTab] = useState<"personal" | "job" | "salary" | "documents">("personal");
+  const [profileData, setProfileData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Edit Modal State
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: userProfile.name,
-    role: userProfile.role,
-    department: userProfile.department,
-    email: userProfile.email,
-    phone: userProfile.phone,
-    avatar: userProfile.avatar,
+    name: "",
+    role: "",
+    department: "",
+    phone: "",
+    avatar: "",
+    address: "",
   });
 
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      const res = await getProfileApi();
+      if (res.success) {
+        setProfileData(res.data);
+      }
+    } catch (error: any) {
+      addToast("Failed to load profile", error.message, "danger");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   const handleOpenEdit = () => {
+    if (!profileData) return;
     setEditForm({
-      name: userProfile.name,
-      role: userProfile.role,
-      department: userProfile.department,
-      email: userProfile.email,
-      phone: userProfile.phone,
-      avatar: userProfile.avatar,
+      name: profileData.name,
+      role: profileData.role,
+      department: profileData.department,
+      phone: profileData.phone,
+      avatar: profileData.avatar,
+      address: profileData.address,
     });
     setIsEditOpen(true);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile(editForm);
-    setIsEditOpen(false);
+    try {
+      const res = await updateProfileApi(editForm);
+      if (res.success) {
+        addToast("Profile Updated", "Changes saved successfully", "success");
+        setIsEditOpen(false);
+        fetchProfile(); // Refresh data
+      }
+    } catch (error: any) {
+      addToast("Failed to update profile", error.message, "danger");
+    }
   };
+
+  if (isLoading || !profileData) {
+    return (
+      <AppShell>
+        <div className="flex items-center justify-center h-64 text-[#8583A6]">
+          Loading profile...
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
       {/* Greeting Header with Edit Profile Button */}
       <GreetingHeader
-        name={userProfile.name}
+        name={profileData.name}
         subtitle="Manage employee profile credentials and details"
         actionButton={
           <button
@@ -76,8 +116,8 @@ export default function ProfilePage() {
         <div className="dayflow-card p-6 flex flex-col items-center text-center space-y-4">
           <div className="relative group cursor-pointer" onClick={handleOpenEdit}>
             <img
-              src={userProfile.avatar}
-              alt={userProfile.name}
+              src={profileData.avatar}
+              alt={profileData.name}
               className="w-24 h-24 rounded-full object-cover border-2 border-[#4f45ba] p-0.5 shadow-sm"
             />
             <div className="absolute inset-0 rounded-full bg-black/40 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
@@ -87,17 +127,17 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <h2 className="text-base font-medium text-[#2B2A45]">{userProfile.name}</h2>
-            <p className="text-xs text-[#8583A6] mt-0.5 font-normal">{userProfile.role}</p>
+            <h2 className="text-base font-medium text-[#2B2A45]">{profileData.name}</h2>
+            <p className="text-xs text-[#8583A6] mt-0.5 font-normal">{profileData.role}</p>
             <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EEEDFE] text-[#4f45ba]">
-              {userProfile.department}
+              {profileData.department}
             </span>
           </div>
 
           <div className="w-full pt-4 border-t border-[#ECEBF7] space-y-2.5 text-left text-xs">
             <div className="flex items-center justify-between text-[#8583A6]">
               <span>Employee ID:</span>
-              <span className="font-mono text-[#2B2A45] font-medium">{userProfile.id}</span>
+              <span className="font-mono text-[#2B2A45] font-medium">{profileData.id}</span>
             </div>
             <div className="flex items-center justify-between text-[#8583A6]">
               <span>Employment Type:</span>
@@ -149,14 +189,14 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2 text-xs text-[#8583A6]">
                       <Mail className="w-3.5 h-3.5 text-[#4f45ba]" /> Work Email
                     </div>
-                    <div className="text-xs font-medium text-[#2B2A45]">{userProfile.email}</div>
+                    <div className="text-xs font-medium text-[#2B2A45]">{profileData.email}</div>
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7] space-y-1">
                     <div className="flex items-center gap-2 text-xs text-[#8583A6]">
                       <Phone className="w-3.5 h-3.5 text-[#4f45ba]" /> Phone Number
                     </div>
-                    <div className="text-xs font-medium text-[#2B2A45]">{userProfile.phone}</div>
+                    <div className="text-xs font-medium text-[#2B2A45]">{profileData.phone}</div>
                   </div>
                 </div>
 
@@ -174,11 +214,11 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="p-3 rounded-lg bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[#8583A6] block mb-1">Job Title</span>
-                    <span className="font-medium text-[#2B2A45]">{userProfile.role}</span>
+                    <span className="font-medium text-[#2B2A45]">{profileData.role}</span>
                   </div>
                   <div className="p-3 rounded-lg bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[#8583A6] block mb-1">Department</span>
-                    <span className="font-medium text-[#2B2A45]">{userProfile.department}</span>
+                    <span className="font-medium text-[#2B2A45]">{profileData.department}</span>
                   </div>
                   <div className="p-3 rounded-lg bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[#8583A6] block mb-1">Direct Manager</span>
@@ -205,25 +245,25 @@ export default function ProfilePage() {
                   <div className="p-3 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[11px] text-[#8583A6] block">Basic Pay</span>
                     <span className="text-base font-semibold text-[#2B2A45] mt-1 block">
-                      ${userProfile.basicSalary.toLocaleString()}
+                      ${profileData.basicSalary.toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[11px] text-[#8583A6] block">HRA</span>
                     <span className="text-base font-semibold text-[#2B2A45] mt-1 block">
-                      ${userProfile.hra.toLocaleString()}
+                      ${profileData.hra.toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7]">
                     <span className="text-[11px] text-[#8583A6] block">Allowances</span>
                     <span className="text-base font-semibold text-[#2B2A45] mt-1 block">
-                      ${userProfile.allowances.toLocaleString()}
+                      ${profileData.allowances.toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl bg-[#EEEDFE] border border-[#D8D6E9]">
                     <span className="text-[11px] text-[#4f45ba] font-semibold block">Net Takehome</span>
                     <span className="text-base font-semibold text-[#4f45ba] mt-1 block">
-                      ${(userProfile.basicSalary + userProfile.hra + userProfile.allowances - userProfile.deductions).toLocaleString()}
+                      ${(profileData.basicSalary + profileData.hra + profileData.allowances - profileData.deductions).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -234,11 +274,10 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-[#2B2A45]">Verified Employee Documents</h3>
                 <div className="space-y-2">
-                  {(userProfile.documents || [
-                    { name: "PAN_Card_Copy.pdf", size: "1.2 MB", date: "Jan 15, 2024" },
-                    { name: "Aadhar_Card_Scan.jpg", size: "850 KB", date: "Jan 15, 2024" },
-                    { name: "Bank_Passbook.pdf", size: "2.4 MB", date: "Jan 15, 2024" },
-                  ]).map((doc, idx) => (
+                  {profileData.documents.length === 0 ? (
+                    <div className="text-xs text-[#8583A6] py-4">No documents found.</div>
+                  ) : (
+                    profileData.documents.map((doc: any, idx: number) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl border border-[#ECEBF7] hover:border-[#4f45ba] bg-white flex items-center justify-between text-xs transition-colors"
@@ -262,7 +301,8 @@ export default function ProfilePage() {
                         <Download className="w-4 h-4" />
                       </button>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </div>
             )}
@@ -278,7 +318,7 @@ export default function ProfilePage() {
         subtitle={role === "admin" ? "Admin mode: All fields unlocked" : "Update phone, email & avatar"}
       >
         <form onSubmit={handleSaveProfile} className="space-y-4">
-          <FormFieldSet label="Full Name">
+          <FormFieldSet label="Full Name" required={role === "admin"}>
             <input
               type="text"
               value={editForm.name}
@@ -287,6 +327,27 @@ export default function ProfilePage() {
               className="w-full px-3.5 py-2.5 bg-white disabled:bg-[#F4F3FB] rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:outline-none focus:border-[#4f45ba]"
             />
           </FormFieldSet>
+
+          {role === "admin" && (
+            <div className="grid grid-cols-2 gap-4">
+              <FormFieldSet label="Job Title / Designation">
+                <input
+                  type="text"
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:outline-none focus:border-[#4f45ba]"
+                />
+              </FormFieldSet>
+              <FormFieldSet label="Department">
+                <input
+                  type="text"
+                  value={editForm.department}
+                  onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:outline-none focus:border-[#4f45ba]"
+                />
+              </FormFieldSet>
+            </div>
+          )}
 
           <FormFieldSet label="Phone Number" required>
             <input
@@ -302,6 +363,15 @@ export default function ProfilePage() {
               type="text"
               value={editForm.avatar}
               onChange={(e) => setEditForm({ ...editForm, avatar: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:outline-none focus:border-[#4f45ba]"
+            />
+          </FormFieldSet>
+          
+          <FormFieldSet label="Residential Address">
+            <textarea
+              rows={2}
+              value={editForm.address}
+              onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
               className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:outline-none focus:border-[#4f45ba]"
             />
           </FormFieldSet>
