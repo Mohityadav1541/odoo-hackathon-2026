@@ -1,19 +1,14 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
-import attendanceRoutes from '../src/routes/attendance.routes.js';
-import prisma from '../src/config/prisma.js';
-import bcrypt from 'bcrypt';
-
 // Create a small express app for testing
 const app = express();
 app.use(express.json());
 // Trust proxy to mock x-forwarded-for
 app.set('trust proxy', true);
-app.use('/api/attendance', attendanceRoutes);
 
-// Mock prisma and bcrypt
-jest.mock('../src/config/prisma.js', () => {
+// Mock prisma and bcrypt using unstable_mockModule for ESM
+jest.unstable_mockModule('../src/config/prisma.js', () => {
   return {
     default: {
       user: {
@@ -29,9 +24,18 @@ jest.mock('../src/config/prisma.js', () => {
   };
 });
 
-jest.mock('bcrypt', () => ({
-  compare: jest.fn(),
+jest.unstable_mockModule('bcrypt', () => ({
+  default: {
+    compare: jest.fn(),
+  }
 }));
+
+// Dynamic imports after mocks
+const { default: attendanceRoutes } = await import('../src/routes/attendance.routes.js');
+const { default: prisma } = await import('../src/config/prisma.js');
+const { default: bcrypt } = await import('bcrypt');
+
+app.use('/api/attendance', attendanceRoutes);
 
 describe('Attendance Controller Tests', () => {
   afterEach(() => {

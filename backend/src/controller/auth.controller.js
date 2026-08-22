@@ -437,19 +437,21 @@ const login = async (req, res) => {
 
         const {
             email,
+            employeeId,
             password
         } = req.body;
 
+        const loginId = email || employeeId;
 
         // ---------------------------------------------
         // VALIDATION
         // ---------------------------------------------
 
-        if (!email || !password) {
+        if (!loginId || !password) {
 
             return res.status(400).json({
                 success: false,
-                message: "Email and password are required"
+                message: "Email/Employee ID and password are required"
             });
 
         }
@@ -459,12 +461,13 @@ const login = async (req, res) => {
         // FIND USER
         // ---------------------------------------------
 
-        const user = await prisma.user.findUnique({
-
+        const user = await prisma.user.findFirst({
             where: {
-                email
+                OR: [
+                    { email: loginId },
+                    { employeeId: loginId }
+                ]
             }
-
         });
 
 

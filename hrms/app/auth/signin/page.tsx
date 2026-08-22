@@ -9,42 +9,33 @@ import { useApp } from "@/context/AppContext";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { setRole, addToast } = useApp();
+  const { setRole, addToast, login } = useApp();
 
-  const [email, setEmail] = useState("alex.morgan@dayflow.hr");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorBanner("Please fill in both email and password.");
+      setErrorBanner("Please fill in both Employee ID/Email and password.");
       return;
     }
 
     setErrorBanner(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      addToast("Signed in successfully", "Welcome back to Dayflow!", "success");
+    const success = await login(email, password);
+    setIsLoading(false);
+    
+    if (success) {
       router.push("/");
-    }, 800);
+    }
   };
 
-  const handleDemoSignIn = (targetRole: "employee" | "admin") => {
-    setRole(targetRole);
-    if (targetRole === "admin") {
-      setEmail("courtney.h@dayflow.hr");
-    } else {
-      setEmail("alex.morgan@dayflow.hr");
-    }
-    setPassword("demo1234");
-    addToast(`Signed in as ${targetRole === "admin" ? "Admin / HR" : "Employee"}`, "Demo account active.", "info");
-    router.push(targetRole === "admin" ? "/admin" : "/");
-  };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#F4F3FB] font-sans antialiased text-[#2B2A45]">
@@ -87,30 +78,6 @@ export default function SignInPage() {
             <p className="text-xs text-[#8583A6] mt-1">Enter your credentials to access your account</p>
           </div>
 
-          {/* Quick Demo Access Bar */}
-          <div className="mb-5 p-3 rounded-lg bg-[#EEEDFE]/60 border border-[#D8D6E9] space-y-2">
-            <div className="text-[11px] font-semibold text-[#4f45ba] uppercase tracking-wider">
-              Quick Demo Access:
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn("employee")}
-                className="flex-1 py-1.5 px-2 bg-white hover:bg-[#EEEDFE] text-[#4f45ba] border border-[#D8D6E9] rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <User className="w-3 h-3" />
-                Employee Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn("admin")}
-                className="flex-1 py-1.5 px-2 bg-white hover:bg-[#EEEDFE] text-[#4f45ba] border border-[#D8D6E9] rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Shield className="w-3 h-3" />
-                Admin / HR Demo
-              </button>
-            </div>
-          </div>
 
           {/* Error Banner */}
           {errorBanner && (
@@ -122,12 +89,12 @@ export default function SignInPage() {
 
           <form onSubmit={handleSignIn} className="space-y-4">
             {/* Email Field */}
-            <FormFieldSet label="Work Email Address">
+            <FormFieldSet label="Employee ID (or Email)">
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.hr"
+                placeholder="EMP001"
                 className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] placeholder-[#9C9AB8] focus:outline-none focus:border-[#4f45ba] focus:ring-2 focus:ring-[#EEEDFE] transition-all"
               />
             </FormFieldSet>

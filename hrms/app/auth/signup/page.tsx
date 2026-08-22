@@ -9,10 +9,10 @@ import { useApp } from "@/context/AppContext";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { addToast, setRole } = useApp();
+  const { addToast, setRole, signup } = useApp();
 
   const [formData, setFormData] = useState({
-    employeeId: "EMP-1008",
+    employeeId: "EMP001",
     fullName: "",
     email: "",
     password: "",
@@ -23,7 +23,7 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -46,12 +46,19 @@ export default function SignUpPage() {
     setErrors({});
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    const success = await signup(
+      formData.employeeId,
+      formData.email,
+      formData.password,
+      formData.selectedRole
+    );
+    
+    setIsLoading(false);
+
+    if (success) {
       setRole(formData.selectedRole);
-      addToast("Account created successfully", "Please verify your email to complete registration.", "success");
-      router.push("/auth/verify-email");
-    }, 1000);
+      router.push("/auth/signin");
+    }
   };
 
   return (
@@ -131,12 +138,12 @@ export default function SignUpPage() {
             </div>
 
             {/* Employee ID */}
-            <FormFieldSet label="Employee ID" hint="Auto-assigned">
+            <FormFieldSet label="Employee ID" hint="Required">
               <input
                 type="text"
                 value={formData.employeeId}
-                disabled
-                className="w-full px-3.5 py-2.5 bg-[#F4F3FB] rounded-lg border border-[#ECEBF7] text-xs text-[#8583A6] font-mono cursor-not-allowed"
+                onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-white rounded-lg border border-[#ECEBF7] text-xs text-[#2B2A45] focus:border-[#4f45ba] focus:outline-none"
               />
             </FormFieldSet>
 

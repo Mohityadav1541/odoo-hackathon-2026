@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { loginApi, signupApi, checkInApi, checkOutApi } from "../services/api";
 
 export type Role = "employee" | "admin";
 
@@ -103,6 +104,10 @@ interface AppContextType {
   // Payroll
   payslips: PayslipItem[];
   generateBatchPayslips: () => void;
+
+  login: (email: string, pass: string) => Promise<boolean>;
+  signup: (empId: string, email: string, pass: string, role?: string) => Promise<boolean>;
+  logout: () => void;
 
   // Notifications & Toasts
   notifications: NotificationItem[];
@@ -322,14 +327,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast("Profile updated successfully", "Your personal details have been saved.", "success");
   };
 
-  const toggleCheckIn = () => {
+  const login = async (empId: string, pass: string) => {
+    try {
+      const res = await loginApi(empId, pass);
+      if (res.success) {
+        // We'll store credentials for the hackathon checkIn flow
+        localStorage.setItem("demo_empId", empId);
+        localStorage.setItem("demo_pass", pass);
+        addToast("Signed in successfully", "Welcome back!", "success");
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      addToast("Sign In Failed", error.message || "Invalid credentials", "danger");
+      return false;
+    }
+  };
+
+  const signup = async (empId: string, email: string, pass: string, role?: string) => {
+    try {
+      const res = await signupApi(empId, email, pass, role);
+      if (res.success) {
+        addToast("Account created successfully", "Please sign in.", "success");
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      addToast("Sign Up Failed", error.message || "Could not create account", "danger");
+      return false;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("demo_empId");
+    localStorage.removeItem("demo_pass");
+    setIsCheckedIn(false);
+    setCheckInTime(null);
+  };
+
+  const toggleCheckIn = async () => {
+    const empId = localStorage.getItem("demo_empId") || "EMP001";
+    const pass = localStorage.getItem("demo_pass") || "password123";
+
     if (isCheckedIn) {
-      setIsCheckedIn(false);
-      addToast("Checked Out", "Workday ended at " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), "warning");
+      try {
+        await checkOutApi(empId, pass);
+        setIsCheckedIn(false);
+        addToast("Checked Out", "Workday ended at " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), "warning");
+      } catch (error: any) {
+        // Fallback for demo when DB is down
+        setIsCheckedIn(false);
+        addToast("Checked Out (Mock - DB Error)", error.message, "warning");
+      }
     } else {
-      setIsCheckedIn(true);
-      setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      addToast("Checked In", "Have a productive day, Alex!", "success");
+      try {
+        const res = await checkInApi(empId, pass);
+        setIsCheckedIn(true);
+        setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        addToast("Checked In", "Have a productive day!", "success");
+      } catch (error: any) {
+        // Fallback for demo when DB is down
+        setIsCheckedIn(true);
+        setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        addToast("Checked In (Mock - DB Error)", error.message, "warning");
+      }
     }
   };
 
@@ -432,6 +493,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleQuickSetting,
         searchTerm,
         setSearchTerm,
+        login,
+        signup,
+        logout,
       }}
     >
       {children}
