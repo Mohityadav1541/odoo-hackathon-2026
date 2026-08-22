@@ -6,7 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
 // =====================================================
 // ENUMS
 // =====================================================
@@ -63,55 +62,53 @@ enum HrDecision {
   REJECTED
 }
 
-
 // =====================================================
 // USER
 // Authentication + Authorization
 // =====================================================
 
 model User {
-  id                Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  employeeId        String   @unique
-  email             String   @unique
-  password          String
+  employeeId String @unique
+  email      String @unique
+  password   String
 
-  role              Role     @default(EMPLOYEE)
+  role Role @default(EMPLOYEE)
 
-  emailVerified     Boolean  @default(false)
+  emailVerified     Boolean @default(false)
   verificationToken String?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS
   // ---------------------------------------------
 
   // One User -> One Employee Profile
-  employee          Employee? @relation("UserEmployee")
+  employee Employee? @relation("UserEmployee")
 
   // Employee's leave requests
-  leaveRequests     LeaveRequest[] @relation("EmployeeLeaves")
+  leaveRequests LeaveRequest[] @relation("EmployeeLeaves")
 
   // Admin/HR approved leaves
-  approvedLeaves    LeaveRequest[] @relation("ApprovedLeaves")
+  approvedLeaves LeaveRequest[] @relation("ApprovedLeaves")
 
   // Attendance records
-  attendance        Attendance[]
+  attendance Attendance[]
 
   // Monthly payroll records
-  payrolls          Payroll[]
+  payrolls Payroll[]
 
   // ── Promotion feature relations ──────────────
-  performanceReviewsGiven   PerformanceReview[]  @relation("ManagerReviews")
-  managerFeedbacksGiven     ManagerFeedback[]    @relation("ManagerFeedbacks")
-  peerFeedbacksGiven        PeerFeedback[]       @relation("PeerReviewerFeedbacks")
+  performanceReviewsGiven     PerformanceReview[]  @relation("ManagerReviews")
+  managerFeedbacksGiven       ManagerFeedback[]    @relation("ManagerFeedbacks")
+  peerFeedbacksGiven          PeerFeedback[]       @relation("PeerReviewerFeedbacks")
   projectPerformancesReviewed ProjectPerformance[] @relation("ProjectReviewers")
   promotionAnalysesEvaluated  PromotionAnalysis[]  @relation("AnalysisEvaluator")
   promotionConfigsCreated     PromotionConfig[]    @relation("ConfigCreator")
 }
-
 
 // =====================================================
 // EMPLOYEE
@@ -119,62 +116,62 @@ model User {
 // =====================================================
 
 model Employee {
-  id             Int      @id @default(autoincrement())
+  salaryAnalysis SalaryAnalysis?
+  id             Int             @id @default(autoincrement())
 
-  userId         Int      @unique
+  userId Int @unique
 
   // Personal Details
-  firstName      String
-  lastName       String?
+  firstName String
+  lastName  String?
 
-  phone          String?
-  address        String?
+  phone   String?
+  address String?
 
-  dateOfBirth    DateTime?
-  gender         Gender?
+  dateOfBirth DateTime?
+  gender      Gender?
 
   profilePicture String?
 
   // Job Details
-  department     String?
-  designation    String?
-  joiningDate    DateTime?
+  department  String?
+  designation String?
+  joiningDate DateTime?
 
   // ── Promotion feature fields ─────────────────
-  jobLevel            String?    // e.g. "L1", "L2", "L3", "Senior", "Lead"
-  lastPromotionDate   DateTime?
-  managerId           Int?       // Self-referencing manager hierarchy
+  jobLevel          String? // e.g. "L1", "L2", "L3", "Senior", "Lead"
+  lastPromotionDate DateTime?
+  managerId         Int? // Self-referencing manager hierarchy
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS
   // ---------------------------------------------
 
   // Employee -> User
-  user           User @relation("UserEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation("UserEmployee", fields: [userId], references: [id], onDelete: Cascade)
 
   // Employee -> Documents
-  documents      Document[]
+  documents Document[]
 
   // Employee -> Salary Structure
-  salary         SalaryStructure?
+  salary SalaryStructure?
 
   // Self-referencing manager hierarchy
-  manager        Employee?  @relation("ManagerReports", fields: [managerId], references: [id])
-  reports        Employee[] @relation("ManagerReports")
+  manager Employee?  @relation("ManagerReports", fields: [managerId], references: [id])
+  reports Employee[] @relation("ManagerReports")
 
   // ── Promotion feature relations ──────────────
-  performanceReviews   PerformanceReview[]   @relation("EmployeeReviews")
-  managerFeedbacks     ManagerFeedback[]     @relation("EmployeeManagerFeedbacks")
-  peerFeedbacks        PeerFeedback[]        @relation("EmployeePeerFeedbacks")
-  projectPerformances  ProjectPerformance[]  @relation("EmployeeProjects")
-  experience           EmployeeExperience?   @relation("EmployeeExperience")
-  promotionAnalyses    PromotionAnalysis[]   @relation("EmployeeAnalyses")
-  promotionRecords     PromotionRecord[]     @relation("EmployeePromotions")
+  performanceReviews  PerformanceReview[]  @relation("EmployeeReviews")
+  managerFeedbacks    ManagerFeedback[]    @relation("EmployeeManagerFeedbacks")
+  peerFeedbacks       PeerFeedback[]       @relation("EmployeePeerFeedbacks")
+  projectPerformances ProjectPerformance[] @relation("EmployeeProjects")
+  experience          EmployeeExperience?  @relation("EmployeeExperience")
+  promotionAnalyses   PromotionAnalysis[]  @relation("EmployeeAnalyses")
+  promotionRecords    PromotionRecord[]    @relation("EmployeePromotions")
 }
-
 
 // =====================================================
 // DOCUMENT
@@ -182,12 +179,12 @@ model Employee {
 // =====================================================
 
 model Document {
-  id         Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   employeeId Int
 
-  name       String
-  url        String
+  name String
+  url  String
 
   uploadedAt DateTime @default(now())
 
@@ -195,11 +192,10 @@ model Document {
   // RELATION
   // ---------------------------------------------
 
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
 }
-
 
 // =====================================================
 // ATTENDANCE
@@ -207,20 +203,20 @@ model Document {
 // =====================================================
 
 model Attendance {
-  id        Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  userId    Int
+  userId Int
 
   // Only date, not time
-  date      DateTime @db.Date
+  date DateTime @db.Date
 
   checkIn   DateTime?
   checkInIp String?
 
-  checkOut  DateTime?
+  checkOut   DateTime?
   checkOutIp String?
 
-  status    AttendanceStatus
+  status AttendanceStatus
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -229,15 +225,13 @@ model Attendance {
   // RELATION
   // ---------------------------------------------
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // One attendance record per employee per day
   @@unique([userId, date])
-
   @@index([userId])
   @@index([date])
 }
-
 
 // =====================================================
 // LEAVE REQUEST
@@ -245,44 +239,43 @@ model Attendance {
 // =====================================================
 
 model LeaveRequest {
-  id              Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // User who applied for leave
-  employeeId      Int
+  employeeId Int
 
-  type            LeaveType
+  type LeaveType
 
-  startDate       DateTime
-  endDate         DateTime
+  startDate DateTime
+  endDate   DateTime
 
-  remarks         String?
+  remarks String?
 
-  status          LeaveStatus @default(PENDING)
+  status LeaveStatus @default(PENDING)
 
   // Comment from Admin / HR
   approvalComment String?
 
   // Admin / HR who approved or rejected
-  approvedById    Int?
+  approvedById Int?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS
   // ---------------------------------------------
 
   // Employee/User who requested leave
-  employee        User @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
+  employee User @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
 
   // Admin/HR who approved/rejected
-  approvedBy      User? @relation("ApprovedLeaves", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedBy User? @relation("ApprovedLeaves", fields: [approvedById], references: [id], onDelete: SetNull)
 
   @@index([employeeId])
   @@index([approvedById])
   @@index([status])
 }
-
 
 // =====================================================
 // SALARY STRUCTURE
@@ -290,34 +283,33 @@ model LeaveRequest {
 // =====================================================
 
 model SalaryStructure {
-  id             Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  employeeId     Int      @unique
+  employeeId Int @unique
 
-  basicSalary    Decimal  @db.Decimal(12, 2)
+  basicSalary Decimal @db.Decimal(12, 2)
 
-  hra            Decimal  @default(0) @db.Decimal(12, 2)
+  hra Decimal @default(0) @db.Decimal(12, 2)
 
-  allowances     Decimal  @default(0) @db.Decimal(12, 2)
+  allowances Decimal @default(0) @db.Decimal(12, 2)
 
-  deductions     Decimal  @default(0) @db.Decimal(12, 2)
+  deductions Decimal @default(0) @db.Decimal(12, 2)
 
-  grossSalary    Decimal  @db.Decimal(12, 2)
+  grossSalary Decimal @db.Decimal(12, 2)
 
-  netSalary      Decimal  @db.Decimal(12, 2)
+  netSalary Decimal @db.Decimal(12, 2)
 
-  effectiveFrom  DateTime @default(now())
+  effectiveFrom DateTime @default(now())
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATION
   // ---------------------------------------------
 
-  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
-
 
 // =====================================================
 // PAYROLL
@@ -325,41 +317,39 @@ model SalaryStructure {
 // =====================================================
 
 model Payroll {
-  id             Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  userId         Int
+  userId Int
 
-  month          Int
-  year           Int
+  month Int
+  year  Int
 
-  basicSalary    Decimal  @db.Decimal(12, 2)
+  basicSalary Decimal @db.Decimal(12, 2)
 
-  allowances     Decimal  @default(0) @db.Decimal(12, 2)
+  allowances Decimal @default(0) @db.Decimal(12, 2)
 
-  deductions     Decimal  @default(0) @db.Decimal(12, 2)
+  deductions Decimal @default(0) @db.Decimal(12, 2)
 
-  grossSalary    Decimal  @db.Decimal(12, 2)
+  grossSalary Decimal @db.Decimal(12, 2)
 
-  netSalary      Decimal  @db.Decimal(12, 2)
+  netSalary Decimal @db.Decimal(12, 2)
 
-  salarySlipUrl  String?
+  salarySlipUrl String?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATION
   // ---------------------------------------------
 
-  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // One payroll record per employee per month
   @@unique([userId, month, year])
-
   @@index([userId])
   @@index([year, month])
 }
-
 
 // =====================================================
 // PROMOTION RECORD
@@ -367,7 +357,7 @@ model Payroll {
 // =====================================================
 
 model PromotionRecord {
-  id              Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   employeeId      Int
   fromDesignation String
@@ -377,13 +367,12 @@ model PromotionRecord {
   reason          String?
   effectiveDate   DateTime
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  employee        Employee @relation("EmployeePromotions", fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation("EmployeePromotions", fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
 }
-
 
 // =====================================================
 // dayflow.performance.review
@@ -391,48 +380,47 @@ model PromotionRecord {
 // =====================================================
 
 model PerformanceReview {
-  id                   Int         @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // Many2one: which employee is being reviewed
-  employeeId           Int
+  employeeId Int
 
   // Many2one: which manager/HR is conducting the review
-  managerId            Int
+  managerId Int
 
   // e.g. "Q3-2026", "H1-2026", "Annual-2025"
-  reviewPeriod         String
+  reviewPeriod String
 
   // Numeric scores 0–100
-  managerScore         Decimal     @db.Decimal(5, 2)
-  performanceScore     Decimal     @db.Decimal(5, 2)
-  goalCompletionScore  Decimal     @db.Decimal(5, 2)
-  projectDeliveryScore Decimal     @db.Decimal(5, 2)
+  managerScore         Decimal @db.Decimal(5, 2)
+  performanceScore     Decimal @db.Decimal(5, 2)
+  goalCompletionScore  Decimal @db.Decimal(5, 2)
+  projectDeliveryScore Decimal @db.Decimal(5, 2)
 
-  strengths            String?
-  improvementAreas     String?
-  managerComments      String?
+  strengths        String?
+  improvementAreas String?
+  managerComments  String?
 
-  reviewDate           DateTime    @default(now())
+  reviewDate DateTime @default(now())
 
   // Workflow state: DRAFT -> SUBMITTED -> APPROVED
-  state                ReviewState @default(DRAFT)
+  state ReviewState @default(DRAFT)
 
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS (Many2one)
   // ---------------------------------------------
 
-  employee             Employee    @relation("EmployeeReviews",  fields: [employeeId], references: [id], onDelete: Cascade)
-  manager              User        @relation("ManagerReviews",   fields: [managerId],  references: [id])
+  employee Employee @relation("EmployeeReviews", fields: [employeeId], references: [id], onDelete: Cascade)
+  manager  User     @relation("ManagerReviews", fields: [managerId], references: [id])
 
+  @@unique([employeeId, managerId, reviewPeriod])
   @@index([employeeId])
   @@index([managerId])
   @@index([reviewPeriod])
-  @@unique([employeeId, managerId, reviewPeriod])
 }
-
 
 // =====================================================
 // dayflow.manager.feedback
@@ -440,44 +428,43 @@ model PerformanceReview {
 // =====================================================
 
 model ManagerFeedback {
-  id                  Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // Many2one: employee being evaluated
-  employeeId          Int
+  employeeId Int
 
   // Many2one: manager giving the feedback
-  managerId           Int
+  managerId Int
 
-  reviewPeriod        String
+  reviewPeriod String
 
   // Competency scores 0–100
-  communicationScore  Decimal  @db.Decimal(5, 2)
-  leadershipScore     Decimal  @db.Decimal(5, 2)
-  ownershipScore      Decimal  @db.Decimal(5, 2)
-  reliabilityScore    Decimal  @db.Decimal(5, 2)
+  communicationScore Decimal @db.Decimal(5, 2)
+  leadershipScore    Decimal @db.Decimal(5, 2)
+  ownershipScore     Decimal @db.Decimal(5, 2)
+  reliabilityScore   Decimal @db.Decimal(5, 2)
 
   // Computed average of the four scores above; stored for auditability
-  overallScore        Decimal  @db.Decimal(5, 2)
+  overallScore Decimal @db.Decimal(5, 2)
 
-  comments            String?
-  feedbackDate        DateTime @default(now())
+  comments     String?
+  feedbackDate DateTime @default(now())
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS (Many2one)
   // ---------------------------------------------
 
-  employee            Employee @relation("EmployeeManagerFeedbacks", fields: [employeeId], references: [id], onDelete: Cascade)
-  manager             User     @relation("ManagerFeedbacks",          fields: [managerId],  references: [id])
+  employee Employee @relation("EmployeeManagerFeedbacks", fields: [employeeId], references: [id], onDelete: Cascade)
+  manager  User     @relation("ManagerFeedbacks", fields: [managerId], references: [id])
 
+  @@unique([employeeId, managerId, reviewPeriod])
   @@index([employeeId])
   @@index([managerId])
   @@index([reviewPeriod])
-  @@unique([employeeId, managerId, reviewPeriod])
 }
-
 
 // =====================================================
 // dayflow.peer.feedback
@@ -485,44 +472,43 @@ model ManagerFeedback {
 // =====================================================
 
 model PeerFeedback {
-  id                  Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // Many2one: employee being reviewed
-  employeeId          Int
+  employeeId Int
 
   // Many2one: peer who is giving the feedback (must be a different user)
-  reviewerId          Int
+  reviewerId Int
 
-  reviewPeriod        String
+  reviewPeriod String
 
   // Peer scores 0–100
-  teamworkScore       Decimal  @db.Decimal(5, 2)
-  communicationScore  Decimal  @db.Decimal(5, 2)
-  collaborationScore  Decimal  @db.Decimal(5, 2)
+  teamworkScore      Decimal @db.Decimal(5, 2)
+  communicationScore Decimal @db.Decimal(5, 2)
+  collaborationScore Decimal @db.Decimal(5, 2)
 
   // Computed average of the three scores above; stored for auditability
-  overallScore        Decimal  @db.Decimal(5, 2)
+  overallScore Decimal @db.Decimal(5, 2)
 
-  comments            String?
-  feedbackDate        DateTime @default(now())
+  comments     String?
+  feedbackDate DateTime @default(now())
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS (Many2one)
   // ---------------------------------------------
 
-  employee            Employee @relation("EmployeePeerFeedbacks",    fields: [employeeId], references: [id], onDelete: Cascade)
-  reviewer            User     @relation("PeerReviewerFeedbacks",    fields: [reviewerId], references: [id])
+  employee Employee @relation("EmployeePeerFeedbacks", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer User     @relation("PeerReviewerFeedbacks", fields: [reviewerId], references: [id])
 
+  // One peer can give one review per employee per period
+  @@unique([employeeId, reviewerId, reviewPeriod])
   @@index([employeeId])
   @@index([reviewerId])
   @@index([reviewPeriod])
-  // One peer can give one review per employee per period
-  @@unique([employeeId, reviewerId, reviewPeriod])
 }
-
 
 // =====================================================
 // dayflow.project.performance
@@ -530,47 +516,46 @@ model PeerFeedback {
 // =====================================================
 
 model ProjectPerformance {
-  id                   Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // Many2one: employee whose performance is tracked
-  employeeId           Int
+  employeeId Int
 
-  projectName          String
-  reviewPeriod         String
+  projectName  String
+  reviewPeriod String
 
   // Goal completion fields
-  goalsAssigned        Int
-  goalsCompleted       Int
+  goalsAssigned  Int
+  goalsCompleted Int
 
   // Stored snapshot: (goalsCompleted / goalsAssigned) * 100
   // Computed at creation time for auditability
-  completionPercentage Decimal  @db.Decimal(5, 2)
+  completionPercentage Decimal @db.Decimal(5, 2)
 
   // Scores 0–100
-  projectScore         Decimal  @db.Decimal(5, 2)
-  qualityScore         Decimal  @db.Decimal(5, 2)
-  deliveryScore        Decimal  @db.Decimal(5, 2)
+  projectScore  Decimal @db.Decimal(5, 2)
+  qualityScore  Decimal @db.Decimal(5, 2)
+  deliveryScore Decimal @db.Decimal(5, 2)
 
   // Many2one: reviewer (Admin/HR/Manager)
-  reviewerId           Int
+  reviewerId Int
 
-  comments             String?
+  comments String?
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS (Many2one)
   // ---------------------------------------------
 
-  employee             Employee @relation("EmployeeProjects",  fields: [employeeId], references: [id], onDelete: Cascade)
-  reviewer             User     @relation("ProjectReviewers",  fields: [reviewerId], references: [id])
+  employee Employee @relation("EmployeeProjects", fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewer User     @relation("ProjectReviewers", fields: [reviewerId], references: [id])
 
   @@index([employeeId])
   @@index([reviewerId])
   @@index([reviewPeriod])
 }
-
 
 // =====================================================
 // dayflow.employee.experience
@@ -580,34 +565,33 @@ model ProjectPerformance {
 // =====================================================
 
 model EmployeeExperience {
-  id                      Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // One-to-one: each employee has one experience record
-  employeeId              Int      @unique
+  employeeId Int @unique
 
   // Date the employee moved into their CURRENT role
   // (joining_date is already on Employee — not duplicated here)
-  currentRoleStartDate    DateTime
+  currentRoleStartDate DateTime
 
   // Pre-company experience the employee had before joining
-  previousExperienceYears Decimal  @db.Decimal(4, 2) @default(0)
+  previousExperienceYears Decimal @default(0) @db.Decimal(4, 2)
 
   // Derived values computed at upsert time and stored for auditability
   // yearsAtCompany      = today - Employee.joiningDate  (in years)
   // yearsInCurrentRole  = today - currentRoleStartDate  (in years)
-  yearsAtCompany          Decimal  @db.Decimal(4, 2)
-  yearsInCurrentRole      Decimal  @db.Decimal(4, 2)
+  yearsAtCompany     Decimal @db.Decimal(4, 2)
+  yearsInCurrentRole Decimal @db.Decimal(4, 2)
 
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATION (Many2one — one experience per employee)
   // ---------------------------------------------
 
-  employee                Employee @relation("EmployeeExperience", fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation("EmployeeExperience", fields: [employeeId], references: [id], onDelete: Cascade)
 }
-
 
 // =====================================================
 // dayflow.promotion.config
@@ -616,37 +600,36 @@ model EmployeeExperience {
 // =====================================================
 
 model PromotionConfig {
-  id                     Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  name                   String   @unique   // e.g. "Default Config 2026"
-  isActive               Boolean  @default(false)
+  name     String  @unique // e.g. "Default Config 2026"
+  isActive Boolean @default(false)
 
   // Weights (Decimal, must sum to 100)
-  attendanceWeight       Decimal  @db.Decimal(5, 2)
-  performanceWeight      Decimal  @db.Decimal(5, 2)
-  projectWeight          Decimal  @db.Decimal(5, 2)
-  managerFeedbackWeight  Decimal  @db.Decimal(5, 2)
-  peerFeedbackWeight     Decimal  @db.Decimal(5, 2)
-  experienceWeight       Decimal  @db.Decimal(5, 2)
+  attendanceWeight      Decimal @db.Decimal(5, 2)
+  performanceWeight     Decimal @db.Decimal(5, 2)
+  projectWeight         Decimal @db.Decimal(5, 2)
+  managerFeedbackWeight Decimal @db.Decimal(5, 2)
+  peerFeedbackWeight    Decimal @db.Decimal(5, 2)
+  experienceWeight      Decimal @db.Decimal(5, 2)
 
   // Score thresholds (out of 100)
-  promotionThreshold     Decimal  @db.Decimal(5, 2)   // >= → PROMOTION_READY
-  considerationThreshold Decimal  @db.Decimal(5, 2)   // >= → UNDER_CONSIDERATION
-  developmentThreshold   Decimal  @db.Decimal(5, 2)   // <  → NEEDS_DEVELOPMENT
+  promotionThreshold     Decimal @db.Decimal(5, 2) // >= → PROMOTION_READY
+  considerationThreshold Decimal @db.Decimal(5, 2) // >= → UNDER_CONSIDERATION
+  developmentThreshold   Decimal @db.Decimal(5, 2) // <  → NEEDS_DEVELOPMENT
 
   // Many2one: who created this config
-  createdById            Int
+  createdById Int
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATION
   // ---------------------------------------------
 
-  createdBy              User     @relation("ConfigCreator", fields: [createdById], references: [id])
+  createdBy User @relation("ConfigCreator", fields: [createdById], references: [id])
 }
-
 
 // =====================================================
 // dayflow.promotion.analysis
@@ -656,60 +639,98 @@ model PromotionConfig {
 // =====================================================
 
 model PromotionAnalysis {
-  id                   Int             @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // Many2one: employee being evaluated
-  employeeId           Int
+  employeeId Int
 
-  evaluationPeriod     String          // e.g. "Q3-2026"
+  evaluationPeriod String // e.g. "Q3-2026"
 
   // ── Snapshot scores (0–100) stored at evaluation time ──
-  attendanceScore      Decimal         @db.Decimal(5, 2)
-  performanceScore     Decimal         @db.Decimal(5, 2)
-  projectScore         Decimal         @db.Decimal(5, 2)
-  managerFeedbackScore Decimal         @db.Decimal(5, 2)
-  peerFeedbackScore    Decimal         @db.Decimal(5, 2)
-  experienceScore      Decimal         @db.Decimal(5, 2)
+  attendanceScore      Decimal @db.Decimal(5, 2)
+  performanceScore     Decimal @db.Decimal(5, 2)
+  projectScore         Decimal @db.Decimal(5, 2)
+  managerFeedbackScore Decimal @db.Decimal(5, 2)
+  peerFeedbackScore    Decimal @db.Decimal(5, 2)
+  experienceScore      Decimal @db.Decimal(5, 2)
 
   // ── Final weighted score ──
-  promotionScore       Decimal         @db.Decimal(5, 2)
+  promotionScore Decimal @db.Decimal(5, 2)
 
   // Derived from promotionScore vs config thresholds
-  promotionStatus      PromotionStatus
+  promotionStatus PromotionStatus
 
   // ── Trend tracking ──
-  previousScore        Decimal?        @db.Decimal(5, 2)
-  scoreChange          Decimal?        @db.Decimal(6, 2)  // can be negative
+  previousScore Decimal? @db.Decimal(5, 2)
+  scoreChange   Decimal? @db.Decimal(6, 2) // can be negative
 
   // ── AI-generated narrative (populated by Step 3 – Gemini) ──
-  aiSummary            String?
-  aiStrengths          String?
-  aiRisks              String?
-  aiRecommendation     String?
+  aiSummary        String?
+  aiStrengths      String?
+  aiRisks          String?
+  aiRecommendation String?
 
   // ── HR decision after AI review ──
-  hrDecision           HrDecision      @default(PENDING)
-  hrComments           String?
+  hrDecision HrDecision @default(PENDING)
+  hrComments String?
 
   // Many2one: which HR/Admin ran this analysis
-  evaluatedById        Int
+  evaluatedById Int
 
-  evaluatedAt          DateTime        @default(now())
+  evaluatedAt DateTime @default(now())
 
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ---------------------------------------------
   // RELATIONS (Many2one)
   // ---------------------------------------------
 
-  employee             Employee        @relation("EmployeeAnalyses",  fields: [employeeId],   references: [id], onDelete: Cascade)
-  evaluatedBy          User            @relation("AnalysisEvaluator", fields: [evaluatedById], references: [id])
+  employee    Employee @relation("EmployeeAnalyses", fields: [employeeId], references: [id], onDelete: Cascade)
+  evaluatedBy User     @relation("AnalysisEvaluator", fields: [evaluatedById], references: [id])
 
   // One analysis per employee per period
   @@unique([employeeId, evaluationPeriod])
-
   @@index([employeeId])
   @@index([evaluationPeriod])
   @@index([promotionStatus])
+}
+
+// =====================================================
+// dayflow.salary.analysis (Step 12)
+// Separate Salary Review Analysis
+// =====================================================
+
+enum CompReviewIndicator {
+  REVIEW_RECOMMENDED
+  REVIEW_NOT_REQUIRED
+  INSUFFICIENT_DATA
+}
+
+model SalaryAnalysis {
+  id Int @id @default(autoincrement())
+
+  employeeId Int      @unique
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Snapshots
+  currentSalary     Decimal @db.Decimal(12, 2)
+  roleSalaryBandMin Decimal @db.Decimal(12, 2)
+  roleSalaryBandMax Decimal @db.Decimal(12, 2)
+
+  performanceScore Decimal? @db.Decimal(5, 2)
+  promotionScore   Decimal? @db.Decimal(5, 2)
+  yearsInRole      Decimal  @db.Decimal(5, 2)
+
+  // Calculations
+  positionInBand Decimal? @db.Decimal(5, 2) // percentage
+  salaryBandGap  Decimal? @db.Decimal(12, 2) // negative if below min, positive if above max, 0 if inside
+
+  reviewIndicator CompReviewIndicator @default(INSUFFICIENT_DATA)
+
+  // AI Explanation
+  aiExplanation String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
