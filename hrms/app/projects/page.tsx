@@ -28,7 +28,7 @@ export default function ProjectsPage() {
   const filteredProjects = projects.filter((prj) => {
     // If employee, only show projects they are involved in
     if (role === "employee") {
-      const isMember = prj.team.some((m) => m.id === userProfile.id);
+      const isMember = prj.team.some((m) => m.name === userProfile.name);
       const isManager = prj.manager === userProfile.name;
       if (!isMember && !isManager) return false;
     }

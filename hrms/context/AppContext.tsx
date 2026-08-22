@@ -311,6 +311,14 @@ const initialProjects: ProjectItem[] = [
   }
 ];
 
+const initialFiveYearSalaryReports = [
+  { year: 2026, totalGross: 350000, totalDeductions: 50000, totalNetPaid: 300000, avgEmployeeSalary: 60000, headcount: 5, growthRate: "+12%" },
+  { year: 2025, totalGross: 320000, totalDeductions: 45000, totalNetPaid: 275000, avgEmployeeSalary: 55000, headcount: 5, growthRate: "+10%" },
+  { year: 2024, totalGross: 290000, totalDeductions: 40000, totalNetPaid: 250000, avgEmployeeSalary: 50000, headcount: 5, growthRate: "+9%" },
+  { year: 2023, totalGross: 265000, totalDeductions: 35000, totalNetPaid: 230000, avgEmployeeSalary: 46000, headcount: 5, growthRate: "+11%" },
+  { year: 2022, totalGross: 240000, totalDeductions: 30000, totalNetPaid: 210000, avgEmployeeSalary: 42000, headcount: 5, growthRate: "+8%" },
+];
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -339,6 +347,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [employees, setEmployees] = useState<EmployeeRecord[]>(initialEmployees);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialLeaves);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [fiveYearSalaryReports, setFiveYearSalaryReports] = useState<any[]>(initialFiveYearSalaryReports);
 
   const [leaveBalances, setLeaveBalances] = useState({
     paid: 8,
@@ -636,6 +645,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         payslips,
         generateBatchPayslips,
         projects,
+        fiveYearSalaryReports,
         notifications,
         markAllNotificationsRead,
         toasts,

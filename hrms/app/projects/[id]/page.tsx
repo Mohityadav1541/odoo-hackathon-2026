@@ -161,9 +161,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="space-y-2">
-            {project.tasks.map((task) => (
+            {project.tasks.map((task: any, idx: number) => (
               <div
-                key={task.id}
+                key={task.id || idx}
                 className="p-3.5 rounded-xl border border-[#ECEBF7] bg-white flex items-center justify-between gap-3 text-xs"
               >
                 <div className="flex items-center gap-3">
