@@ -331,7 +331,12 @@ const initialFiveYearSalaryReports = [
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRole] = useState<Role>("employee");
+  const [role, setRole] = useState<Role>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("userRole") as Role) || "employee";
+    }
+    return "employee";
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [projects] = useState<ProjectItem[]>(initialProjects);
   const [fiveYearSalaryReports] = useState(initialFiveYearSalaryReports);
@@ -481,6 +486,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         
         const backendRole = res.user?.role === "ADMIN" ? "admin" : "employee";
         setRole(backendRole);
+        localStorage.setItem("userRole", backendRole);
         
         // Fetch real data right after login
         await fetchDashboardData(backendRole);
@@ -512,6 +518,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem("demo_empId");
     localStorage.removeItem("demo_pass");
     localStorage.removeItem("authToken");
+    localStorage.removeItem("userRole");
     setIsCheckedIn(false);
     setCheckInTime(null);
   };

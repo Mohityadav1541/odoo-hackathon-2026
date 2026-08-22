@@ -32,7 +32,7 @@ const SlackIcon = ({ className }: { className?: string }) => (
 
 export const SidebarNav: React.FC = () => {
   const pathname = usePathname();
-  const { role } = useApp();
+  const { role, logout } = useApp();
 
   const navItems = [
     {
@@ -122,16 +122,19 @@ export const SidebarNav: React.FC = () => {
           </span>
         </a>
 
-        <Link
-          href="/auth/signin"
+        <button
+          onClick={() => {
+            logout();
+            window.location.href = "/auth/signin";
+          }}
           title="Sign Out"
-          className="w-11 h-11 rounded-xl flex items-center justify-center text-white/75 hover:bg-white/15 hover:text-white transition-all group relative"
+          className="w-11 h-11 rounded-xl flex items-center justify-center text-white/75 hover:bg-white/15 hover:text-white transition-all group relative cursor-pointer"
         >
           <LogOut className="w-5 h-5" />
           <span className="absolute left-16 bg-[#2B2A45] text-white text-xs px-2.5 py-1 rounded-md shadow-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
             Sign Out
           </span>
-        </Link>
+        </button>
       </div>
     </aside>
   );
