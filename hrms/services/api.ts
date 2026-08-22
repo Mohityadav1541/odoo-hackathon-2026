@@ -130,3 +130,27 @@ export async function updateLeaveStatusApi(id: string, status: 'APPROVED' | 'REJ
     body: JSON.stringify({ status, approvalComment }),
   });
 }
+
+// ----------------------------------------------------
+// PAYROLL & SALARY
+// ----------------------------------------------------
+
+export async function getMyPayrollApi() {
+  return fetchApi('/payroll/me', {
+    method: 'GET',
+  });
+}
+
+export async function updateSalaryStructureApi(employeeId: string, data: { basicSalary: number, hra: number, allowances: number, deductions: number }) {
+  return fetchApi(`/payroll/salary-structure/${employeeId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function generatePayrollApi(month: number, year: number) {
+  return fetchApi('/payroll/generate', {
+    method: 'POST',
+    body: JSON.stringify({ month, year }),
+  });
+}

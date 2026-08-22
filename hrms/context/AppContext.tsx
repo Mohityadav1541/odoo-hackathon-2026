@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { loginApi, signupApi, checkInApi, checkOutApi, getEmployeeDashboardApi, getAdminDashboardApi, applyLeaveApi, updateLeaveStatusApi } from "../services/api";
+import { loginApi, signupApi, checkInApi, checkOutApi, getEmployeeDashboardApi, getAdminDashboardApi, applyLeaveApi, updateLeaveStatusApi, getMyPayrollApi, updateSalaryStructureApi, generatePayrollApi } from "../services/api";
 
 export type Role = "employee" | "admin";
 
@@ -73,6 +73,17 @@ export interface PayslipItem {
   issuedDate: string;
 }
 
+export interface ProjectItem {
+  id: string;
+  title: string;
+  department: string;
+  status: "In Progress" | "Completed" | "Planning";
+  description: string;
+  progress: number;
+  tasks: { status: string }[];
+  team: { id: string; avatar: string; name: string; role: string }[];
+}
+
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -104,6 +115,9 @@ interface AppContextType {
   // Payroll
   payslips: PayslipItem[];
   generateBatchPayslips: () => void;
+
+  // Projects
+  projects: ProjectItem[];
 
   login: (email: string, pass: string) => Promise<boolean>;
   signup: (empId: string, email: string, pass: string, role?: string) => Promise<boolean>;
@@ -258,11 +272,40 @@ const initialLeaves: LeaveRequest[] = [
   },
 ];
 
+const initialProjects: ProjectItem[] = [
+  {
+    id: "PRJ-101",
+    title: "HRMS Portal Redesign",
+    department: "Design & Product",
+    status: "In Progress",
+    description: "Revamping the internal HRMS portal with a modern UI and improved UX.",
+    progress: 65,
+    tasks: [{ status: "completed" }, { status: "pending" }],
+    team: [
+      { id: "1", name: "Alex Morgan", role: "Lead", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
+      { id: "2", name: "Devon Lane", role: "Dev", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" }
+    ]
+  },
+  {
+    id: "PRJ-102",
+    title: "Q3 Performance Reviews",
+    department: "Human Resources",
+    status: "Planning",
+    description: "Preparation for Q3 company-wide performance reviews and feedback cycles.",
+    progress: 15,
+    tasks: [{ status: "pending" }],
+    team: [
+      { id: "3", name: "Courtney Henry", role: "HR", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" }
+    ]
+  }
+];
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [role, setRole] = useState<Role>("employee");
   const [searchTerm, setSearchTerm] = useState("");
+  const [projects] = useState<ProjectItem[]>(initialProjects);
 
   // Employee details
   const [userProfile, setUserProfile] = useState<EmployeeRecord>(initialEmployees[0]);
@@ -341,14 +384,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } else {
         const res = await getEmployeeDashboardApi();
+        const payrollRes = await getMyPayrollApi();
+        
         if (res.success) {
           setUserProfile(res.data.userProfile);
           setWeeklyAttendance(res.data.weeklyAttendance);
           setLeaveRequests(res.data.leaveRequests);
-          setPayslips(res.data.payslips);
           setIsCheckedIn(res.data.userProfile.status === "present" || res.data.userProfile.status === "half-day");
           setCheckInTime(res.data.userProfile.checkIn !== "--:--" ? res.data.userProfile.checkIn : null);
           setTodayHours(res.data.userProfile.hours || 0);
+        }
+        
+        if (payrollRes && payrollRes.success) {
+          setPayslips(payrollRes.data);
         }
       }
     } catch (error) {
@@ -473,25 +521,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const updateEmployeeSalary = (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, ...salary } : e))
-    );
-    addToast("Salary Structure Saved", `Salary details updated for ${id}.`, "success");
+  const updateEmployeeSalary = async (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => {
+    try {
+      const res = await updateSalaryStructureApi(id, salary);
+      if (res.success) {
+        addToast("Salary Structure Saved", `Salary details updated for ${id}.`, "success");
+        await fetchDashboardData("admin"); // Refresh admin employee list
+      }
+    } catch (error: any) {
+      addToast("Failed to update salary", error.message, "danger");
+    }
   };
 
-  const generateBatchPayslips = () => {
-    const newPayslip: PayslipItem = {
-      id: `PAY-2026-08`,
-      month: "August 2026",
-      gross: userProfile.basicSalary + userProfile.hra + userProfile.allowances,
-      deductions: userProfile.deductions,
-      net: userProfile.basicSalary + userProfile.hra + userProfile.allowances - userProfile.deductions,
-      status: "Paid",
-      issuedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    };
-    setPayslips((prev) => [newPayslip, ...prev]);
-    addToast("Batch Payslips Generated", "August 2026 payslips issued to all employees.", "success");
+  const generateBatchPayslips = async () => {
+    try {
+      const date = new Date();
+      const res = await generatePayrollApi(date.getMonth() + 1, date.getFullYear());
+      if (res.success) {
+        addToast("Batch Payslips Generated", res.message, "success");
+        await fetchDashboardData(); // Refresh if we are an admin or employee? Usually admin clicks it
+      }
+    } catch (error: any) {
+      addToast("Failed to generate payslips", error.message, "danger");
+    }
   };
 
   const markAllNotificationsRead = () => {
@@ -527,6 +579,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateEmployeeSalary,
         payslips,
         generateBatchPayslips,
+        projects,
         notifications,
         markAllNotificationsRead,
         toasts,
