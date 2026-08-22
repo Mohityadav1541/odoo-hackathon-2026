@@ -334,6 +334,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [role, setRole] = useState<Role>("employee");
   const [searchTerm, setSearchTerm] = useState("");
   const [projects] = useState<ProjectItem[]>(initialProjects);
+  const [fiveYearSalaryReports] = useState(initialFiveYearSalaryReports);
 
   // Employee details
   const [userProfile, setUserProfile] = useState<EmployeeRecord>(initialEmployees[0]);
