@@ -21,6 +21,8 @@ export interface EmployeeRecord {
   hra: number;
   allowances: number;
   deductions: number;
+  address?: string;
+  documents?: { name: string; size: string; date: string; }[];
 }
 
 export interface LeaveRequest {
