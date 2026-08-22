@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import { generatePromotionInsights } from "../services/gemini.service.js";
+import { notifyHrSlack } from "../services/slack.service.js";
 
 // =====================================================
 // dayflow.promotion.analysis  CONTROLLER
@@ -90,6 +91,18 @@ export const runPromotionAnalysis = async (req, res) => {
                     aiRecommendation: aiInsights.suggested_hr_actions ? aiInsights.suggested_hr_actions.map(s => `• ${s}`).join('\n') : null,
                 }
             });
+
+            // 6. Slack Notification (Step 13)
+            // Send only if the employee meets the minimum consideration threshold
+            if (engineResult.status === "Strong Candidate" || engineResult.status === "Consider") {
+                const empName = employee ? `${employee.firstName} ${employee.lastName}` : "Employee";
+                // Extract the first recommended action from AI insights if available, otherwise use default
+                const fallbackRec = engineResult.status === "Strong Candidate" ? "Strongly recommend for promotion panel." : "Consider this employee for HR promotion review.";
+                const aiRecText = (aiInsights.suggested_hr_actions && aiInsights.suggested_hr_actions.length > 0) ? aiInsights.suggested_hr_actions[0] : fallbackRec;
+                
+                // Call Slack webhook async (do not block the response)
+                notifyHrSlack(empName, engineResult, aiRecText, engineResult.analysis_id).catch(console.error);
+            }
         }
 
         return res.status(200).json({
