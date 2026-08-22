@@ -1,9 +1,9 @@
-const prisma = require("../config/prisma");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
+import prisma from "../config/prisma.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
-const transporter = require("../config/mailer");
+// import transporter from "../config/mailer.js"; // Optional if mailer isn't fully set up yet
 
 
 // =====================================================
@@ -578,7 +578,7 @@ const login = async (req, res) => {
 
 
 
-module.exports = {
+export {
     signup,
     verifyEmail,
     login

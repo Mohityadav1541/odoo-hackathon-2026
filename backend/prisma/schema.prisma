@@ -168,7 +168,10 @@ model Attendance {
   date      DateTime @db.Date
 
   checkIn   DateTime?
+  checkInIp String?
+
   checkOut  DateTime?
+  checkOutIp String?
 
   status    AttendanceStatus
 

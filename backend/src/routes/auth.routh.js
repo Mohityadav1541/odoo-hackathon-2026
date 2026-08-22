@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
 
-const {
+import {
     signup,
     verifyEmail,
     login
-} = require("../controllers/auth.controller");
+} from "../controller/auth.controller.js";
 
 const router = express.Router();
 
@@ -39,4 +39,4 @@ router.post(
 );
 
 
-module.exports = router;
+export default router;
