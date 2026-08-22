@@ -21,11 +21,17 @@ import {
 } from "lucide-react";
 
 export default function ProjectsPage() {
-  const { projects, searchTerm, role, addToast } = useApp();
+  const { projects, searchTerm, role, userProfile, addToast } = useApp();
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [deptFilter, setDeptFilter] = useState<string>("All");
 
   const filteredProjects = projects.filter((prj) => {
+    // If employee, only show projects they are involved in
+    if (role === "employee") {
+      const isMember = prj.team.some((m) => m.id === userProfile.id);
+      const isManager = prj.manager === userProfile.name;
+      if (!isMember && !isManager) return false;
+    }
     const matchSearch =
       prj.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       prj.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
