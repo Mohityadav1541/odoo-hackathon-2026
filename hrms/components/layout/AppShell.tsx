@@ -60,12 +60,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children, rightRail }) => {
                   >
                     Return to Employee Home <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
-                  <button
-                    onClick={() => setRole("admin")}
-                    className="px-4 py-2 border border-[#ECEBF7] text-[#8583A6] hover:bg-[#F4F3FB] text-xs font-medium rounded-lg"
-                  >
-                    Switch to HR View
-                  </button>
                 </div>
               </div>
             ) : isAdminAccessingEmployee ? (
@@ -87,12 +81,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children, rightRail }) => {
                   >
                     Go to HR Admin Dashboard <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
-                  <button
-                    onClick={() => setRole("employee")}
-                    className="px-4 py-2 border border-[#ECEBF7] text-[#8583A6] hover:bg-[#F4F3FB] text-xs font-medium rounded-lg"
-                  >
-                    Switch to Employee View
-                  </button>
                 </div>
               </div>
             ) : (

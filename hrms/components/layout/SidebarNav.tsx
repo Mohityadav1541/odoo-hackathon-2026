@@ -14,6 +14,7 @@ import {
   BarChart3,
   LogOut,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 const SlackIcon = ({ className }: { className?: string }) => (
@@ -60,6 +61,7 @@ export const SidebarNav: React.FC = () => {
       role: "all",
     },
     { label: "Projects", href: "/projects", icon: FolderKanban, role: "all" },
+    { label: "Performance", href: "/admin/promotion", icon: TrendingUp, role: "admin" },
     { label: "Reports", href: "/reports", icon: BarChart3, role: "admin" },
   ];
 

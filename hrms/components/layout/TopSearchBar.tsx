@@ -48,30 +48,7 @@ export const TopSearchBar: React.FC<TopSearchBarProps> = ({ onToggleNotification
 
       {/* Right Controls */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Role Toggle Switcher */}
-        <button
-          onClick={handleRoleToggle}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#ECEBF7] text-xs font-medium text-[#2B2A45] hover:border-[#4f45ba] transition-all shadow-xs cursor-pointer"
-          title="Click to toggle view role between Employee and Admin/HR"
-        >
-          {role === "admin" ? (
-            <>
-              <Shield className="w-3.5 h-3.5 text-[#4f45ba]" />
-              <span>Admin / HR View</span>
-              <span className="ml-1 text-[10px] bg-[#EEEDFE] text-[#4f45ba] px-1.5 py-0.2 rounded-full font-semibold">
-                HR
-              </span>
-            </>
-          ) : (
-            <>
-              <User className="w-3.5 h-3.5 text-[#8583A6]" />
-              <span>Employee View</span>
-              <span className="ml-1 text-[10px] bg-[#F4F3FB] text-[#8583A6] px-1.5 py-0.2 rounded-full font-semibold">
-                EMP
-              </span>
-            </>
-          )}
-        </button>
+
 
         {/* Notifications Bell */}
         <button
