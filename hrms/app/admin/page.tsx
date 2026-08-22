@@ -326,7 +326,6 @@ export default function AdminDashboardPage() {
       </ModalDrawer>
 
       {/* New Employee Modal */}
-          </div>
       <NewEmployeeModal
         isOpen={isNewEmployeeModalOpen}
         onClose={() => setIsNewEmployeeModalOpen(false)}
