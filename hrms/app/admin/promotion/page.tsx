@@ -19,7 +19,10 @@ export default function PromotionDashboard() {
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    const debounceTimer = setTimeout(() => {
+      fetchData();
+    }, 300);
+    return () => clearTimeout(debounceTimer);
   }, [filterStatus, filterPeriod]);
 
   const fetchData = async () => {
@@ -43,7 +46,6 @@ export default function PromotionDashboard() {
       setRunning(true);
       await runPromotionAnalysisApi(parseInt(runEmpId), runPeriod);
       setRunEmpId("");
-      fetchData(); // Refresh list
     } catch (err: any) {
       alert("Error running analysis: " + err.message);
     } finally {
@@ -70,6 +72,10 @@ export default function PromotionDashboard() {
           <p className="text-3xl font-bold text-gray-900 mt-2">{summary.promotionReady || 0}</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+          <p className="text-sm text-gray-500 font-medium">Under Consideration</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{summary.underConsideration || 0}</p>
+        </div>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
           <p className="text-sm text-gray-500 font-medium">Under Consideration</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{summary.underConsideration || 0}</p>
         </div>
