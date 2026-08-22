@@ -10,7 +10,7 @@ import {
   Clock,
   CalendarDays,
   CreditCard,
-  Users,
+  FolderKanban,
   BarChart3,
   LogOut,
   Sparkles,
@@ -21,12 +21,32 @@ export const SidebarNav: React.FC = () => {
   const { role } = useApp();
 
   const navItems = [
-    { label: "Dashboard", href: role === "admin" ? "/admin" : "/", icon: LayoutDashboard, role: "all" },
+    {
+      label: "Dashboard",
+      href: role === "admin" ? "/admin" : "/",
+      icon: LayoutDashboard,
+      role: "all",
+    },
     { label: "Profile", href: "/profile", icon: User, role: "all" },
-    { label: "Attendance", href: role === "admin" ? "/admin/attendance" : "/attendance", icon: Clock, role: "all" },
-    { label: "Leave", href: role === "admin" ? "/admin/leave" : "/leave", icon: CalendarDays, role: "all" },
-    { label: "Payroll", href: role === "admin" ? "/admin/payroll" : "/payroll", icon: CreditCard, role: "all" },
-    { label: "Team", href: "/admin/employees", icon: Users, role: "admin" },
+    {
+      label: "Attendance",
+      href: role === "admin" ? "/admin/attendance" : "/attendance",
+      icon: Clock,
+      role: "all",
+    },
+    {
+      label: "Leave",
+      href: role === "admin" ? "/admin/leave" : "/leave",
+      icon: CalendarDays,
+      role: "all",
+    },
+    {
+      label: "Payroll",
+      href: role === "admin" ? "/admin/payroll" : "/payroll",
+      icon: CreditCard,
+      role: "all",
+    },
+    { label: "Projects", href: "/projects", icon: FolderKanban, role: "all" },
     { label: "Reports", href: "/reports", icon: BarChart3, role: "admin" },
   ];
 

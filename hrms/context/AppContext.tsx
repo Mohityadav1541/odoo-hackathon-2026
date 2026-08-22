@@ -4,6 +4,12 @@ import React, { createContext, useContext, useState } from "react";
 
 export type Role = "employee" | "admin";
 
+export interface EmployeeDocument {
+  name: string;
+  size: string;
+  date: string;
+}
+
 export interface EmployeeRecord {
   id: string;
   name: string;
@@ -20,6 +26,7 @@ export interface EmployeeRecord {
   hra: number;
   allowances: number;
   deductions: number;
+  documents?: EmployeeDocument[];
 }
 
 export interface LeaveRequest {
@@ -72,6 +79,38 @@ export interface PayslipItem {
   issuedDate: string;
 }
 
+export interface ProjectTask {
+  id: string;
+  title: string;
+  assignedTo: string;
+  status: "completed" | "in-progress" | "todo";
+}
+
+export interface ProjectItem {
+  id: string;
+  title: string;
+  department: string;
+  manager: string;
+  managerAvatar: string;
+  progress: number;
+  deadline: string;
+  status: "In Progress" | "Completed" | "Planning" | "On Hold";
+  description: string;
+  team: { id: string; name: string; role: string; avatar: string }[];
+  tasks: ProjectTask[];
+  budget: string;
+}
+
+export interface YearlySalaryReport {
+  year: number;
+  totalGross: number;
+  totalDeductions: number;
+  totalNetPaid: number;
+  avgEmployeeSalary: number;
+  headcount: number;
+  growthRate: string;
+}
+
 interface AppContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -79,6 +118,7 @@ interface AppContextType {
 
   // Profile
   userProfile: EmployeeRecord;
+  setUserProfile: (profile: EmployeeRecord) => void;
   updateUserProfile: (data: Partial<EmployeeRecord>) => void;
 
   // Attendance & Check-in
@@ -98,6 +138,7 @@ interface AppContextType {
 
   // Employee Directory
   employees: EmployeeRecord[];
+  addEmployee: (emp: Omit<EmployeeRecord, "id">) => void;
   updateEmployeeSalary: (id: string, salary: { basicSalary: number; hra: number; allowances: number; deductions: number }) => void;
 
   // Payroll
@@ -114,6 +155,12 @@ interface AppContextType {
   // Quick settings
   quickSettings: { emailAlerts: boolean; autoCheckIn: boolean };
   toggleQuickSetting: (setting: "emailAlerts" | "autoCheckIn") => void;
+
+  // Projects Module
+  projects: ProjectItem[];
+
+  // 5-Year Salary Reports
+  fiveYearSalaryReports: YearlySalaryReport[];
 
   // Navigation search term
   searchTerm: string;
@@ -251,6 +298,101 @@ const initialLeaves: LeaveRequest[] = [
   },
 ];
 
+const initialProjects: ProjectItem[] = [
+  {
+    id: "PRJ-101",
+    title: "Odoo HRMS Engine Integration",
+    department: "Engineering",
+    manager: "Courtney Henry",
+    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    progress: 78,
+    deadline: "Sep 30, 2026",
+    status: "In Progress",
+    budget: "$45,000",
+    description: "Building standalone Next.js HRMS frontend wired to Odoo JSON-RPC/REST backend endpoints.",
+    team: [
+      { id: "EMP-1001", name: "Alex Morgan", role: "Senior UX Designer", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
+      { id: "EMP-1002", name: "Devon Lane", role: "Frontend Engineer", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
+      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
+    ],
+    tasks: [
+      { id: "TSK-1", title: "Implement Odoo JSON-RPC authentication adapter", assignedTo: "Robert Fox", status: "completed" },
+      { id: "TSK-2", title: "Design responsive sidebar & dashboard cards", assignedTo: "Alex Morgan", status: "completed" },
+      { id: "TSK-3", title: "Wire attendance check-in endpoints to hr.attendance", assignedTo: "Devon Lane", status: "in-progress" },
+      { id: "TSK-4", title: "Conduct end-to-end integration testing", assignedTo: "Devon Lane", status: "todo" },
+    ],
+  },
+  {
+    id: "PRJ-102",
+    title: "Mobile App Redesign (iOS & Android)",
+    department: "Design & Product",
+    manager: "Arlene McCoy",
+    managerAvatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    progress: 45,
+    deadline: "Oct 15, 2026",
+    status: "In Progress",
+    budget: "$32,000",
+    description: "Revamping native mobile app experience for self-service attendance, leave applications, and push notifications.",
+    team: [
+      { id: "EMP-1001", name: "Alex Morgan", role: "Senior UX Designer", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" },
+      { id: "EMP-1005", name: "Arlene McCoy", role: "Product Manager", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" },
+    ],
+    tasks: [
+      { id: "TSK-10", title: "Complete Mobile UI Figma wireframes", assignedTo: "Alex Morgan", status: "completed" },
+      { id: "TSK-11", title: "React Native component library setup", assignedTo: "Alex Morgan", status: "in-progress" },
+      { id: "TSK-12", title: "Push notification push relay server", assignedTo: "Arlene McCoy", status: "todo" },
+    ],
+  },
+  {
+    id: "PRJ-103",
+    title: "AI Facial Recognition Attendance Scanner",
+    department: "Engineering",
+    manager: "Robert Fox",
+    managerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    progress: 100,
+    deadline: "Aug 01, 2026",
+    status: "Completed",
+    budget: "$28,000",
+    description: "Automated kiosk-based facial recognition check-in for physical office entry points.",
+    team: [
+      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
+      { id: "EMP-1002", name: "Devon Lane", role: "Frontend Engineer", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
+    ],
+    tasks: [
+      { id: "TSK-20", title: "Train OpenCV facial detection model", assignedTo: "Robert Fox", status: "completed" },
+      { id: "TSK-21", title: "Deploy kiosk hardware units to SF & NYC offices", assignedTo: "Devon Lane", status: "completed" },
+    ],
+  },
+  {
+    id: "PRJ-104",
+    title: "Cloud Infrastructure & Compliance Migration",
+    department: "Human Resources",
+    manager: "Courtney Henry",
+    managerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    progress: 20,
+    deadline: "Nov 30, 2026",
+    status: "Planning",
+    budget: "$50,000",
+    description: "Migrating HR database and document repositories to SOC2 Type II compliant cloud vault.",
+    team: [
+      { id: "EMP-1003", name: "Courtney Henry", role: "HR Specialist", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80" },
+      { id: "EMP-1004", name: "Robert Fox", role: "Backend Architect", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80" },
+    ],
+    tasks: [
+      { id: "TSK-30", title: "Audit security & data privacy compliance", assignedTo: "Courtney Henry", status: "in-progress" },
+      { id: "TSK-31", title: "DB encryption at rest implementation", assignedTo: "Robert Fox", status: "todo" },
+    ],
+  },
+];
+
+const initialFiveYearSalaryReports: YearlySalaryReport[] = [
+  { year: 2026, totalGross: 340000, totalDeductions: 22200, totalNetPaid: 317800, avgEmployeeSalary: 68000, headcount: 5, growthRate: "+8.5%" },
+  { year: 2025, totalGross: 312000, totalDeductions: 20400, totalNetPaid: 291600, avgEmployeeSalary: 62400, headcount: 5, growthRate: "+12.1%" },
+  { year: 2024, totalGross: 278000, totalDeductions: 18200, totalNetPaid: 259800, avgEmployeeSalary: 55600, headcount: 5, growthRate: "+10.3%" },
+  { year: 2023, totalGross: 245000, totalDeductions: 15900, totalNetPaid: 229100, avgEmployeeSalary: 49000, headcount: 5, growthRate: "+14.0%" },
+  { year: 2022, totalGross: 210000, totalDeductions: 13600, totalNetPaid: 196400, avgEmployeeSalary: 42000, headcount: 5, growthRate: "Baseline" },
+];
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -376,6 +518,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast("Salary Structure Saved", `Salary details updated for ${id}.`, "success");
   };
 
+  const addEmployee = (emp: Omit<EmployeeRecord, "id">) => {
+    const newId = `EMP-${1000 + employees.length + 1}`;
+    setEmployees((prev) => [{ ...emp, id: newId }, ...prev]);
+    addToast("Employee Added", `${emp.name} has been added to the directory.`, "success");
+  };
+
   const generateBatchPayslips = () => {
     const newPayslip: PayslipItem = {
       id: `PAY-2026-08`,
@@ -407,6 +555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setRole,
         toggleRole,
         userProfile,
+        setUserProfile,
         updateUserProfile,
         isCheckedIn,
         checkInTime,
@@ -420,6 +569,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         approveLeave,
         rejectLeave,
         employees,
+        addEmployee,
         updateEmployeeSalary,
         payslips,
         generateBatchPayslips,
@@ -430,6 +580,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeToast,
         quickSettings,
         toggleQuickSetting,
+        projects: initialProjects,
+        fiveYearSalaryReports: initialFiveYearSalaryReports,
         searchTerm,
         setSearchTerm,
       }}

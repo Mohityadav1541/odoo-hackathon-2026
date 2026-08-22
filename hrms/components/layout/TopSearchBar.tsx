@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { Search, Bell, Shield, User } from "lucide-react";
 
@@ -9,9 +10,27 @@ interface TopSearchBarProps {
 }
 
 export const TopSearchBar: React.FC<TopSearchBarProps> = ({ onToggleNotifications }) => {
-  const { role, toggleRole, notifications, searchTerm, setSearchTerm, userProfile } = useApp();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { role, setRole, addToast, notifications, searchTerm, setSearchTerm, userProfile } = useApp();
 
   const unreadCount = notifications.filter((n) => n.isUnread).length;
+
+  const handleRoleToggle = () => {
+    const nextRole = role === "employee" ? "admin" : "employee";
+    setRole(nextRole);
+    addToast(
+      `Switched view to ${nextRole === "admin" ? "Admin / HR" : "Employee"}`,
+      "Permissions and navigation updated.",
+      "info"
+    );
+
+    if (nextRole === "admin" && (pathname === "/" || pathname === "/attendance" || pathname === "/leave" || pathname === "/payroll")) {
+      router.push("/admin");
+    } else if (nextRole === "employee" && (pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/reports")) {
+      router.push("/");
+    }
+  };
 
   return (
     <header className="w-full flex items-center justify-between gap-4 mb-6">
@@ -31,7 +50,7 @@ export const TopSearchBar: React.FC<TopSearchBarProps> = ({ onToggleNotification
       <div className="flex items-center gap-3 shrink-0">
         {/* Role Toggle Switcher */}
         <button
-          onClick={toggleRole}
+          onClick={handleRoleToggle}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#ECEBF7] text-xs font-medium text-[#2B2A45] hover:border-[#4f45ba] transition-all shadow-xs cursor-pointer"
           title="Click to toggle view role between Employee and Admin/HR"
         >

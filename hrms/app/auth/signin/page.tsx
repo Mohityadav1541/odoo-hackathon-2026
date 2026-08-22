@@ -9,10 +9,11 @@ import { useApp } from "@/context/AppContext";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { setRole, addToast } = useApp();
+  const { role, setRole, addToast, employees, setUserProfile } = useApp();
 
   const [email, setEmail] = useState("alex.morgan@dayflow.hr");
   const [password, setPassword] = useState("password123");
+  const [selectedRole, setSelectedRole] = useState<"employee" | "admin">("employee");
   const [rememberMe, setRememberMe] = useState(true);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,21 +30,24 @@ export default function SignInPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      addToast("Signed in successfully", "Welcome back to Dayflow!", "success");
-      router.push("/");
-    }, 800);
-  };
-
-  const handleDemoSignIn = (targetRole: "employee" | "admin") => {
-    setRole(targetRole);
-    if (targetRole === "admin") {
-      setEmail("courtney.h@dayflow.hr");
-    } else {
-      setEmail("alex.morgan@dayflow.hr");
-    }
-    setPassword("demo1234");
-    addToast(`Signed in as ${targetRole === "admin" ? "Admin / HR" : "Employee"}`, "Demo account active.", "info");
-    router.push(targetRole === "admin" ? "/admin" : "/");
+      // Auto detect HR vs Employee from email credential
+      const isHr = email.toLowerCase().includes("courtney") || email.toLowerCase().includes("admin") || email.toLowerCase().includes("hr");
+      const targetRole = isHr ? "admin" : "employee";
+      
+      let match = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
+      if (!match) {
+        match = isHr ? (employees.find(e => e.role.toLowerCase().includes("hr")) || employees[0]) : employees[0];
+      }
+      
+      setUserProfile(match);
+      setRole(targetRole);
+      addToast(
+        "Signed in successfully",
+        `Welcome back to Dayflow ${targetRole === "admin" ? "Admin / HR" : "Employee"} Workspace!`,
+        "success"
+      );
+      router.push(targetRole === "admin" ? "/admin" : "/");
+    }, 600);
   };
 
   return (
@@ -87,31 +91,6 @@ export default function SignInPage() {
             <p className="text-xs text-[#8583A6] mt-1">Enter your credentials to access your account</p>
           </div>
 
-          {/* Quick Demo Access Bar */}
-          <div className="mb-5 p-3 rounded-lg bg-[#EEEDFE]/60 border border-[#D8D6E9] space-y-2">
-            <div className="text-[11px] font-semibold text-[#4f45ba] uppercase tracking-wider">
-              Quick Demo Access:
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn("employee")}
-                className="flex-1 py-1.5 px-2 bg-white hover:bg-[#EEEDFE] text-[#4f45ba] border border-[#D8D6E9] rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <User className="w-3 h-3" />
-                Employee Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoSignIn("admin")}
-                className="flex-1 py-1.5 px-2 bg-white hover:bg-[#EEEDFE] text-[#4f45ba] border border-[#D8D6E9] rounded-md text-[11px] font-medium transition-colors flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Shield className="w-3 h-3" />
-                Admin / HR Demo
-              </button>
-            </div>
-          </div>
-
           {/* Error Banner */}
           {errorBanner && (
             <div className="mb-4 p-3 bg-[#FCEBEB] border border-[#FCEBEB] rounded-lg text-xs text-[#791F1F] flex items-center gap-2">
@@ -121,6 +100,7 @@ export default function SignInPage() {
           )}
 
           <form onSubmit={handleSignIn} className="space-y-4">
+
             {/* Email Field */}
             <FormFieldSet label="Work Email Address">
               <input

@@ -7,12 +7,14 @@ import { AppShell } from "@/components/layout/AppShell";
 import { GreetingHeader } from "@/components/layout/GreetingHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { NewEmployeeModal } from "@/components/ui/NewEmployeeModal";
 import { Search, Filter, Mail, Phone, Building, UserPlus, Eye } from "lucide-react";
 
 export default function AdminEmployeesPage() {
   const { employees, searchTerm, addToast } = useApp();
   const [departmentFilter, setDepartmentFilter] = useState("All");
   const [localSearch, setLocalSearch] = useState("");
+  const [isNewEmployeeModalOpen, setIsNewEmployeeModalOpen] = useState(false);
 
   const effectiveSearch = localSearch || searchTerm;
 
@@ -33,11 +35,11 @@ export default function AdminEmployeesPage() {
         subtitle="Manage workforce profiles, roles, and departmental assignments"
         actionButton={
           <button
-            onClick={() => addToast("Add Employee Modal", "Employee onboarding workflow initiated.", "info")}
+            onClick={() => setIsNewEmployeeModalOpen(true)}
             className="px-4 py-2 bg-[#4f45ba] hover:bg-[#4038a3] text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            Add Employee
+            New Employee
           </button>
         }
       />
@@ -125,6 +127,11 @@ export default function AdminEmployeesPage() {
           </div>
         )}
       </div>
+
+      <NewEmployeeModal
+        isOpen={isNewEmployeeModalOpen}
+        onClose={() => setIsNewEmployeeModalOpen(false)}
+      />
     </AppShell>
   );
 }

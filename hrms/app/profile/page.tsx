@@ -234,11 +234,11 @@ export default function ProfilePage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-[#2B2A45]">Verified Employee Documents</h3>
                 <div className="space-y-2">
-                  {[
-                    { name: "Employment_Contract_2026.pdf", size: "1.2 MB", date: "Jan 15, 2024" },
-                    { name: "Tax_Form_W2_2025.pdf", size: "850 KB", date: "Jan 30, 2026" },
-                    { name: "Identity_Passport_Copy.pdf", size: "2.4 MB", date: "Jan 15, 2024" },
-                  ].map((doc, idx) => (
+                  {(userProfile.documents || [
+                    { name: "PAN_Card_Copy.pdf", size: "1.2 MB", date: "Jan 15, 2024" },
+                    { name: "Aadhar_Card_Scan.jpg", size: "850 KB", date: "Jan 15, 2024" },
+                    { name: "Bank_Passbook.pdf", size: "2.4 MB", date: "Jan 15, 2024" },
+                  ]).map((doc, idx) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl border border-[#ECEBF7] hover:border-[#4f45ba] bg-white flex items-center justify-between text-xs transition-colors"

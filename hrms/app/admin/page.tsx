@@ -11,6 +11,7 @@ import { StatusActivityCard } from "@/components/ui/StatusActivityCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ModalDrawer } from "@/components/ui/ModalDrawer";
 import { FormFieldSet } from "@/components/ui/FormFieldSet";
+import { NewEmployeeModal } from "@/components/ui/NewEmployeeModal";
 import {
   Users,
   UserCheck,
@@ -22,6 +23,7 @@ import {
   X,
   Eye,
   Building,
+  UserPlus,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
@@ -32,11 +34,13 @@ export default function AdminDashboardPage() {
     approveLeave,
     rejectLeave,
     searchTerm,
+    addToast,
   } = useApp();
 
   const [departmentFilter, setDepartmentFilter] = useState("All");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectComment, setRejectComment] = useState("");
+  const [isNewEmployeeModalOpen, setIsNewEmployeeModalOpen] = useState(false);
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === "pending");
 
@@ -135,6 +139,15 @@ export default function AdminDashboardPage() {
       <GreetingHeader
         name={userProfile.name}
         subtitle="HR & Operations Administrator • Dayflow HRMS"
+        actionButton={
+          <button
+            onClick={() => setIsNewEmployeeModalOpen(true)}
+            className="px-4 py-2 bg-[#4f45ba] hover:bg-[#4038a3] text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            New Employee
+          </button>
+        }
       />
 
       <div className="space-y-6">
@@ -304,6 +317,12 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </ModalDrawer>
+
+      {/* New Employee Modal */}
+      <NewEmployeeModal
+        isOpen={isNewEmployeeModalOpen}
+        onClose={() => setIsNewEmployeeModalOpen(false)}
+      />
     </AppShell>
   );
 }
