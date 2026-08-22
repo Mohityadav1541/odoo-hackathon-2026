@@ -1,0 +1,314 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum Role {
+  ADMIN
+  HR
+  EMPLOYEE
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+}
+
+enum LeaveType {
+  PAID
+  SICK
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+// =====================================================
+// USER
+// Authentication + Authorization
+// =====================================================
+
+model User {
+  id                Int      @id @default(autoincrement())
+
+  employeeId        String   @unique
+  email             String   @unique
+  password          String
+
+  role              Role     @default(EMPLOYEE)
+
+  emailVerified     Boolean  @default(false)
+  verificationToken String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATIONS
+  // ---------------------------------------------
+
+  // One User -> One Employee Profile
+  employee          Employee? @relation("UserEmployee")
+
+  // Employee's leave requests
+  leaveRequests     LeaveRequest[] @relation("EmployeeLeaves")
+
+  // Admin/HR approved leaves
+  approvedLeaves    LeaveRequest[] @relation("ApprovedLeaves")
+
+  // Attendance records
+  attendance        Attendance[]
+
+  // Monthly payroll records
+  payrolls          Payroll[]
+}
+
+
+// =====================================================
+// EMPLOYEE
+// Employee Profile Management
+// =====================================================
+
+model Employee {
+  id             Int      @id @default(autoincrement())
+
+  userId         Int      @unique
+
+  // Personal Details
+  firstName      String
+  lastName       String?
+
+  phone          String?
+  address        String?
+
+  dateOfBirth    DateTime?
+  gender         Gender?
+
+  profilePicture String?
+
+  // Job Details
+  department     String?
+  designation    String?
+  joiningDate    DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATIONS
+  // ---------------------------------------------
+
+  // Employee -> User
+  user           User @relation("UserEmployee", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Employee -> Documents
+  documents      Document[]
+
+  // Employee -> Salary Structure
+  salary         SalaryStructure?
+}
+
+
+// =====================================================
+// DOCUMENT
+// Employee Documents
+// =====================================================
+
+model Document {
+  id         Int      @id @default(autoincrement())
+
+  employeeId Int
+
+  name       String
+  url        String
+
+  uploadedAt DateTime @default(now())
+
+  // ---------------------------------------------
+  // RELATION
+  // ---------------------------------------------
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+
+// =====================================================
+// ATTENDANCE
+// Daily / Weekly Attendance
+// =====================================================
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+
+  userId    Int
+
+  // Only date, not time
+  date      DateTime @db.Date
+
+  checkIn   DateTime?
+  checkInIp String?
+
+  checkOut  DateTime?
+  checkOutIp String?
+
+  status    AttendanceStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATION
+  // ---------------------------------------------
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One attendance record per employee per day
+  @@unique([userId, date])
+
+  @@index([userId])
+  @@index([date])
+}
+
+
+// =====================================================
+// LEAVE REQUEST
+// Leave & Time-Off Management
+// =====================================================
+
+model LeaveRequest {
+  id              Int      @id @default(autoincrement())
+
+  // User who applied for leave
+  employeeId      Int
+
+  type            LeaveType
+
+  startDate       DateTime
+  endDate         DateTime
+
+  remarks         String?
+
+  status          LeaveStatus @default(PENDING)
+
+  // Comment from Admin / HR
+  approvalComment String?
+
+  // Admin / HR who approved or rejected
+  approvedById    Int?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATIONS
+  // ---------------------------------------------
+
+  // Employee/User who requested leave
+  employee        User @relation("EmployeeLeaves", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  // Admin/HR who approved/rejected
+  approvedBy      User? @relation("ApprovedLeaves", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
+  @@index([approvedById])
+  @@index([status])
+}
+
+
+// =====================================================
+// SALARY STRUCTURE
+// Current Employee Salary
+// =====================================================
+
+model SalaryStructure {
+  id             Int      @id @default(autoincrement())
+
+  employeeId     Int      @unique
+
+  basicSalary    Decimal  @db.Decimal(12, 2)
+
+  hra            Decimal  @default(0) @db.Decimal(12, 2)
+
+  allowances     Decimal  @default(0) @db.Decimal(12, 2)
+
+  deductions     Decimal  @default(0) @db.Decimal(12, 2)
+
+  grossSalary    Decimal  @db.Decimal(12, 2)
+
+  netSalary      Decimal  @db.Decimal(12, 2)
+
+  effectiveFrom  DateTime @default(now())
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATION
+  // ---------------------------------------------
+
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+
+// =====================================================
+// PAYROLL
+// Monthly Payroll History
+// =====================================================
+
+model Payroll {
+  id             Int      @id @default(autoincrement())
+
+  userId         Int
+
+  month          Int
+  year           Int
+
+  basicSalary    Decimal  @db.Decimal(12, 2)
+
+  allowances     Decimal  @default(0) @db.Decimal(12, 2)
+
+  deductions     Decimal  @default(0) @db.Decimal(12, 2)
+
+  grossSalary    Decimal  @db.Decimal(12, 2)
+
+  netSalary      Decimal  @db.Decimal(12, 2)
+
+  salarySlipUrl  String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // ---------------------------------------------
+  // RELATION
+  // ---------------------------------------------
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One payroll record per employee per month
+  @@unique([userId, month, year])
+
+  @@index([userId])
+  @@index([year, month])
+}
