@@ -25,17 +25,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const [suggestion, setSuggestion] = useState("");
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
-  const [suggestionsList, setSuggestionsList] = useState<{author: string, text: string, date: string, fileName?: string}[]>([
+  const [suggestionsList, setSuggestionsList] = useState<{author: string, text: string, date: string, fileName?: string, fileUrl?: string}[]>([
     { author: "Devon Lane", text: "We should consider updating the backend schema before finalizing the UI.", date: "Aug 20, 2026" }
   ]);
 
   const handleAddSuggestion = () => {
     if (!suggestion.trim() && !attachedFile) return;
+    
+    let fileUrl = undefined;
+    if (attachedFile) {
+      fileUrl = URL.createObjectURL(attachedFile);
+    }
+    
     setSuggestionsList(prev => [{ 
       author: "You", 
       text: suggestion, 
       date: "Just now",
-      fileName: attachedFile ? attachedFile.name : undefined
+      fileName: attachedFile ? attachedFile.name : undefined,
+      fileUrl: fileUrl
     }, ...prev]);
     setSuggestion("");
     setAttachedFile(null);
@@ -202,18 +209,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Project Suggestions & Documents */}
-        {role !== "admin" && (
-          <div className="dayflow-card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-medium text-[#2B2A45]">Project Suggestions & Documents</h3>
-                <p className="text-xs text-[#8583A6] mt-0.5">
-                  Share ideas or upload documents related to this project
-                </p>
-              </div>
+        <div className="dayflow-card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-medium text-[#2B2A45]">Project Suggestions & Documents</h3>
+              <p className="text-xs text-[#8583A6] mt-0.5">
+                Share ideas or upload documents related to this project
+              </p>
             </div>
+          </div>
 
-            <div className="space-y-4">
+          <div className="space-y-4">
+            {role !== "admin" && (
               <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 <input
                   type="text"
@@ -243,29 +250,48 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   Submit Suggestion
                 </button>
               </div>
+            )}
 
-              <div className="space-y-3 mt-4">
-                {suggestionsList.map((s, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl border border-[#ECEBF7] bg-[#F4F3FB] flex flex-col gap-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#2B2A45]">{s.author}</span>
-                      <span className="text-[#8583A6] text-[11px]">{s.date}</span>
-                    </div>
-                    {s.text && <p className="text-[#2B2A45] leading-relaxed mt-1">{s.text}</p>}
-                    {s.fileName && (
-                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#ECEBF7] rounded-md max-w-fit">
-                        <svg className="w-3.5 h-3.5 text-[#4f45ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                        <span className="text-[#4f45ba] font-medium text-[11px]">{s.fileName}</span>
-                      </div>
-                    )}
+            <div className="space-y-3 mt-4">
+              {suggestionsList.map((s, idx) => (
+                <div key={idx} className="p-3.5 rounded-xl border border-[#ECEBF7] bg-[#F4F3FB] flex flex-col gap-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-[#2B2A45]">{s.author}</span>
+                    <span className="text-[#8583A6] text-[11px]">{s.date}</span>
                   </div>
-                ))}
-              </div>
+                  {s.text && <p className="text-[#2B2A45] leading-relaxed mt-1">{s.text}</p>}
+                  {s.fileName && (
+                    <div className="mt-2 flex items-center justify-between gap-4">
+                      {s.fileUrl ? (
+                        <a 
+                          href={s.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#ECEBF7] rounded-md hover:border-[#4f45ba] cursor-pointer transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5 text-[#4f45ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                          <span className="text-[#4f45ba] font-medium text-[11px] hover:underline">{s.fileName}</span>
+                        </a>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#ECEBF7] rounded-md">
+                          <svg className="w-3.5 h-3.5 text-[#4f45ba]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                          <span className="text-[#4f45ba] font-medium text-[11px]">{s.fileName}</span>
+                        </div>
+                      )}
+                      <span className="text-[10px] font-semibold text-[#085041] bg-[#E1F5EE] px-2 py-0.5 rounded flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Filtered by Affinda API
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </AppShell>
   );

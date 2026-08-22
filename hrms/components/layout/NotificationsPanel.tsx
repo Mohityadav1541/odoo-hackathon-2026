@@ -4,6 +4,8 @@ import React, { useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { X, CheckCheck, Info, CheckCircle2, AlertCircle } from "lucide-react";
 
+import Link from "next/link";
+
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -114,9 +116,9 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                 );
                 
                 return n.link ? (
-                  <a href={n.link} key={n.id} className="block">
+                  <Link href={n.link} key={n.id} className="block">
                     {content}
-                  </a>
+                  </Link>
                 ) : content;
               })
             )}
