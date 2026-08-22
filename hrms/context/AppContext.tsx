@@ -54,6 +54,7 @@ export interface NotificationItem {
   timestamp: string;
   isUnread: boolean;
   type: "info" | "success" | "warning" | "danger";
+  targetRole?: "employee" | "admin" | "all";
 }
 
 export interface ToastItem {
@@ -342,9 +343,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ]);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    { id: "1", title: "Leave Request Submitted", message: "Your paid leave request for Aug 25-27 is under review.", timestamp: "10 mins ago", isUnread: true, type: "info" },
-    { id: "2", title: "Payslip Available", message: "July 2026 payslip is ready for download.", timestamp: "2 hours ago", isUnread: true, type: "success" },
-    { id: "3", title: "Policy Update", message: "Updated remote work guideline posted in company portal.", timestamp: "Yesterday", isUnread: false, type: "info" },
+    { id: "1", title: "Leave Request Submitted", message: "Your paid leave request for Aug 25-27 is under review.", timestamp: "10 mins ago", isUnread: true, type: "info", targetRole: "employee" },
+    { id: "2", title: "Payslip Available", message: "July 2026 payslip is ready for download.", timestamp: "2 hours ago", isUnread: true, type: "success", targetRole: "all" },
+    { id: "3", title: "Policy Update", message: "Updated remote work guideline posted in company portal.", timestamp: "Yesterday", isUnread: false, type: "info", targetRole: "all" },
+    { id: "4", title: "New Leave Application", message: "Devon Lane has applied for 2 days of sick leave.", timestamp: "1 hour ago", isUnread: true, type: "warning", targetRole: "admin" },
+    { id: "5", title: "Pending Onboarding", message: "You have 1 pending document verification for a new employee.", timestamp: "4 hours ago", isUnread: false, type: "info", targetRole: "admin" },
   ]);
 
   const [toasts, setToasts] = useState<ToastItem[]>([]);

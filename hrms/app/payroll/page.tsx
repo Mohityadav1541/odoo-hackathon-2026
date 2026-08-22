@@ -27,50 +27,39 @@ export default function EmployeePayrollPage() {
       />
 
       <div className="space-y-6">
-        {/* Top Summary Card: 3-Column Metric Layout */}
-        <div className="dayflow-card p-6 bg-gradient-to-r from-white via-white to-[#EEEDFE]/30">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="section-label">CURRENT MONTH SALARY BREAKDOWN</span>
-              <h3 className="text-sm font-medium text-[#2B2A45] mt-0.5">August 2026 Estimated Pay</h3>
-            </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E1F5EE] text-[#085041] text-xs font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Payroll Active
-            </span>
+        {/* Salary Overview Card */}
+        <div className="dayflow-card max-w-sm overflow-hidden border border-[#ECEBF7] shadow-sm">
+          <div className="bg-[#4f45ba] text-white p-4 font-medium text-sm flex items-center justify-between">
+            Salary Overview
+            <span className="text-[11px] bg-white/20 px-2 py-0.5 rounded-full">August 2026</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {/* Gross Pay */}
-            <div className="p-4 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7]">
-              <span className="text-xs text-[#8583A6] font-medium block">Total Gross Salary</span>
-              <div className="text-2xl font-semibold text-[#2B2A45] mt-1">
-                ${gross.toLocaleString()}
-              </div>
-              <span className="text-[11px] text-[#8583A6] mt-1 block">
-                Basic (${userProfile.basicSalary}) + HRA (${userProfile.hra}) + Allowances (${userProfile.allowances})
-              </span>
+          <div className="p-5 space-y-4 text-sm text-[#2B2A45]">
+            <div className="flex justify-between items-center">
+              <span className="text-[#8583A6]">Basic Salary</span>
+              <span className="font-medium font-mono">₹{userProfile.basicSalary.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#8583A6]">Allowances</span>
+              <span className="font-medium font-mono">₹{(userProfile.allowances + userProfile.hra).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-[#8583A6]">Deductions</span>
+              <span className="font-medium font-mono text-[#791F1F]">-₹{deductions.toLocaleString()}</span>
+            </div>
+            
+            <div className="pt-4 mt-2 border-t border-[#ECEBF7] flex justify-between items-center">
+              <span className="font-semibold text-[#2B2A45]">Net Salary</span>
+              <span className="text-xl font-bold font-mono text-[#4f45ba]">₹{net.toLocaleString()}</span>
             </div>
 
-            {/* Deductions */}
-            <div className="p-4 rounded-xl bg-[#F4F3FB] border border-[#ECEBF7]">
-              <span className="text-xs text-[#8583A6] font-medium block">Total Deductions</span>
-              <div className="text-2xl font-semibold text-[#791F1F] mt-1">
-                -${deductions.toLocaleString()}
-              </div>
-              <span className="text-[11px] text-[#8583A6] mt-1 block">
-                Tax, Health Insurance, PF Contributions
-              </span>
-            </div>
-
-            {/* Net Pay */}
-            <div className="p-4 rounded-xl bg-[#EEEDFE] border border-[#D8D6E9]">
-              <span className="text-xs text-[#4f45ba] font-semibold block">Net Takehome Pay</span>
-              <div className="text-2xl font-semibold text-[#4f45ba] mt-1">
-                ${net.toLocaleString()}
-              </div>
-              <span className="text-[11px] text-[#4f45ba] mt-1 block font-medium">
-                Scheduled Disbursement: Aug 31, 2026
-              </span>
+            <div className="pt-4">
+              <button
+                onClick={() => handleDownloadSlip("August 2026")}
+                className="w-full py-2.5 bg-[#EEEDFE] hover:bg-[#4f45ba] hover:text-white text-[#4f45ba] rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                View Salary Slip
+              </button>
             </div>
           </div>
         </div>
@@ -111,13 +100,13 @@ export default function EmployeePayrollPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-3 font-mono text-[#2B2A45]">
-                      ${ps.gross.toLocaleString()}
+                      ₹{ps.gross.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-3 font-mono text-[#791F1F]">
-                      -${ps.deductions.toLocaleString()}
+                      -₹{ps.deductions.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-3 font-mono font-semibold text-[#4f45ba]">
-                      ${ps.net.toLocaleString()}
+                      ₹{ps.net.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-3">
                       <StatusBadge status={ps.status} />

@@ -201,7 +201,7 @@ export default function EmployeeDashboardPage() {
           {/* Circular Progress Ring */}
           <div className="shrink-0 flex items-center justify-center p-2 bg-[#FDFDFE] rounded-2xl border border-[#ECEBF7]">
             <CircularProgressRing
-              currentHours={isCheckedIn ? todayHours : 0}
+              currentHours={todayHours}
               totalHours={8}
               isCheckedIn={isCheckedIn}
             />
@@ -226,29 +226,6 @@ export default function EmployeeDashboardPage() {
           <WeeklyBarStrip days={weeklyAttendance} />
         </div>
 
-        {/* 4-Tile Quick Action Grid */}
-        <div>
-          <div className="section-label mb-3">QUICK ACTIONS</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Link href="/leave">
-              <QuickActionTile
-                label="Apply Leave"
-                icon={CalendarDays}
-                onClick={() => {}}
-                badgeCount={pendingLeaves.length}
-              />
-            </Link>
-            <Link href="/profile">
-              <QuickActionTile label="My Profile" icon={User} onClick={() => {}} />
-            </Link>
-            <Link href="/payroll">
-              <QuickActionTile label="Payslips" icon={CreditCard} onClick={() => {}} />
-            </Link>
-            <Link href="/attendance">
-              <QuickActionTile label="Team Calendar" icon={Users} onClick={() => {}} />
-            </Link>
-          </div>
-        </div>
       </div>
     </AppShell>
   );
