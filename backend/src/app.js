@@ -19,6 +19,7 @@ import peerFeedbackRoutes       from "./routes/peer.feedback.routes.js";
 import projectPerformanceRoutes from "./routes/project.performance.routes.js";
 import employeeExperienceRoutes from "./routes/employee.experience.routes.js";
 import promotionRoutes          from "./routes/promotion.routes.js";
+import salaryAnalysisRoutes from "./routes/salary.analysis.routes.js";
 
 app.use(express.json());
 app.use(cookieParser());

@@ -1,17 +1,20 @@
 import prisma from "../config/prisma.js";
+import { generatePromotionInsights } from "../services/gemini.service.js";
 
 // =====================================================
 // dayflow.promotion.analysis  CONTROLLER
 //
 // Now delegates calculation and persistence to the
-// Python promotion score engine microservice.
+// Python promotion score engine microservice, and then
+// calls Gemini to generate the HR insights (Step 11).
 // =====================================================
 
 // ─────────────────────────────────────────────────
 // RUN ANALYSIS   POST /api/v1/promotion/analysis/run
 // Admin / HR only
 //
-// Calls the Python Engine to compute scores and save history
+// Calls the Python Engine to compute scores and save history,
+// then calls Gemini to generate AI insights and updates the record.
 // ─────────────────────────────────────────────────
 export const runPromotionAnalysis = async (req, res) => {
     try {
@@ -25,12 +28,18 @@ export const runPromotionAnalysis = async (req, res) => {
             });
         }
 
-        // Calculate a 90 day period for the engine
+        // Fetch employee details to pass to Gemini
+        const employee = await prisma.employee.findUnique({
+            where: { id: parseInt(employeeId) },
+            select: { firstName: true, lastName: true, department: true, designation: true, jobLevel: true }
+        });
+
+        // 1. Calculate a 90 day period for the engine
         const periodEnd = new Date();
         const periodStart = new Date();
         periodStart.setDate(periodStart.getDate() - 90);
 
-        // Call the Python service
+        // 2. Call the Python service for numerical scoring
         const response = await fetch("http://localhost:8001/api/engine/calculate", {
             method: "POST",
             headers: {
@@ -51,15 +60,47 @@ export const runPromotionAnalysis = async (req, res) => {
         }
 
         const engineResult = await response.json();
+        
+        // 3. Prepare data for Gemini (Step 11)
+        const dataForGemini = {
+            employee_role: employee?.designation,
+            evaluation_period: evaluationPeriod,
+            promotion_score: engineResult.final_score,
+            status: engineResult.status,
+            factor_scores: engineResult.raw_scores,
+            factor_weights: engineResult.weights,
+            key_metrics: engineResult.metrics_detail
+        };
+
+        // 4. Call Gemini to generate HR Insights
+        // This process is independent of the numerical calculation.
+        const aiInsights = await generatePromotionInsights(dataForGemini);
+
+        // 5. Update the PromotionAnalysis record with the AI narrative
+        if (aiInsights && engineResult.analysis_id) {
+            await prisma.promotionAnalysis.update({
+                where: { id: engineResult.analysis_id },
+                data: {
+                    aiSummary: aiInsights.executive_summary,
+                    // Store as stringified JSON or plain strings since the schema expects String?
+                    // We'll join arrays into bulleted lists
+                    aiStrengths: aiInsights.top_strengths ? aiInsights.top_strengths.map(s => `• ${s}`).join('\n') : null,
+                    aiRisks: (aiInsights.areas_needing_improvement ? aiInsights.areas_needing_improvement.map(s => `• ${s}`).join('\n') + '\n\n' : '') +
+                             (aiInsights.review_questions ? "HR Review Questions:\n" + aiInsights.review_questions.map(q => `• ${q}`).join('\n') : ''),
+                    aiRecommendation: aiInsights.suggested_hr_actions ? aiInsights.suggested_hr_actions.map(s => `• ${s}`).join('\n') : null,
+                }
+            });
+        }
 
         return res.status(200).json({
             success: true,
             message: `Promotion analysis complete — status: ${engineResult.status}`,
-            data: engineResult
+            data: engineResult,
+            insightsGenerated: !!aiInsights
         });
     } catch (error) {
         console.error("RUN PROMOTION ANALYSIS ERROR:", error);
-        return res.status(500).json({ success: false, message: "Server error connecting to Python engine" });
+        return res.status(500).json({ success: false, message: "Server error connecting to Python engine or AI" });
     }
 };
 
