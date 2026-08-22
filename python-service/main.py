@@ -2,9 +2,13 @@ from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 from datetime import date
 from engine import run_promotion_engine
-from database import get_cursor
+from database import get_cursor, close_pool
 
 app = FastAPI(title="DayFlow Promotion Calculation Service")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    close_pool()
 
 class EngineRequest(BaseModel):
     employee_id: int

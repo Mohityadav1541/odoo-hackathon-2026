@@ -31,7 +31,7 @@ export const runPromotionAnalysis = async (req, res) => {
 
         // Fetch employee details to pass to Gemini
         const employee = await prisma.employee.findUnique({
-            where: { id: parseInt(employeeId) },
+            where: { id: Number(employeeId) },
             select: { firstName: true, lastName: true, department: true, designation: true, jobLevel: true }
         });
 
@@ -47,7 +47,7 @@ export const runPromotionAnalysis = async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                employee_id: parseInt(employeeId),
+                employee_id: Number(employeeId),
                 period: evaluationPeriod,
                 period_start: periodStart.toISOString().split('T')[0],
                 period_end: periodEnd.toISOString().split('T')[0],
@@ -134,7 +134,7 @@ export const updateHrDecision = async (req, res) => {
         }
 
         const updated = await prisma.promotionAnalysis.update({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             data:  { hrDecision, hrComments: hrComments || null },
             include: { employee: { select: { id: true, firstName: true, lastName: true } } },
         });
@@ -163,7 +163,7 @@ export const updateHrDecision = async (req, res) => {
 export const getAnalysisByEmployee = async (req, res) => {
     try {
         const records = await prisma.promotionAnalysis.findMany({
-            where:   { employeeId: parseInt(req.params.employeeId) },
+            where:   { employeeId: Number(req.params.employeeId) },
             include: { evaluatedBy: { select: { id: true, employeeId: true, email: true } } },
             orderBy: { evaluatedAt: "desc" },
         });
@@ -226,7 +226,7 @@ export const getAllAnalyses = async (req, res) => {
 export const getAnalysisById = async (req, res) => {
     try {
         const record = await prisma.promotionAnalysis.findUnique({
-            where: { id: parseInt(req.params.id) },
+            where: { id: Number(req.params.id) },
             include: {
                 employee:    { include: { user: { select: { email: true, employeeId: true } }, experience: true } },
                 evaluatedBy: { select: { id: true, employeeId: true, email: true } },

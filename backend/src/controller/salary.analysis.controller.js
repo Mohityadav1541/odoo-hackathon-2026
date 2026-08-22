@@ -12,17 +12,17 @@ export const runSalaryAnalysis = async (req, res) => {
 
         // 1. Fetch Salary Structure
         const salaryStructure = await prisma.salaryStructure.findUnique({
-            where: { employeeId: parseInt(employeeId) }
+            where: { employeeId: Number(employeeId) }
         });
 
         // 2. Fetch Experience
         const experience = await prisma.employeeExperience.findUnique({
-            where: { employeeId: parseInt(employeeId) }
+            where: { employeeId: Number(employeeId) }
         });
 
         // 3. Fetch latest Promotion Analysis
         const latestPromo = await prisma.promotionAnalysis.findFirst({
-            where: { employeeId: parseInt(employeeId) },
+            where: { employeeId: Number(employeeId) },
             orderBy: { evaluatedAt: "desc" }
         });
 
@@ -92,10 +92,10 @@ export const runSalaryAnalysis = async (req, res) => {
 
         // 7. Upsert to DB
         const savedRecord = await prisma.salaryAnalysis.upsert({
-            where: { employeeId: parseInt(employeeId) },
+            where: { employeeId: Number(employeeId) },
             update: analysisData,
             create: {
-                employeeId: parseInt(employeeId),
+                employeeId: Number(employeeId),
                 ...analysisData
             }
         });
@@ -114,7 +114,7 @@ export const runSalaryAnalysis = async (req, res) => {
 export const getSalaryAnalysis = async (req, res) => {
     try {
         const record = await prisma.salaryAnalysis.findUnique({
-            where: { employeeId: parseInt(req.params.employeeId) }
+            where: { employeeId: Number(req.params.employeeId) }
         });
         if (!record) return res.status(404).json({ success: false, message: "No salary analysis found." });
         
