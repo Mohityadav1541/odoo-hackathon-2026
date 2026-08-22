@@ -4,7 +4,7 @@ import cors from "cors";
 
 const app = express();
 
-import authRoutes from "./routes/auth.routh.js";
+import authRoutes from "./routes/auth.route.js";
 import attendanceRoutes from "./routes/attendance.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import profileRoutes from "./routes/profile.routes.js";

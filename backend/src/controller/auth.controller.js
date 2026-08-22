@@ -2,6 +2,8 @@ import prisma from "../config/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { OTPhtml,generateOTP } from "../utils/email.js";
+import sendEmail from "../services/email.js";
 
 // import transporter from "../config/mailer.js"; // Optional if mailer isn't fully set up yet
 
@@ -93,9 +95,10 @@ const signup = async (req, res) => {
         // GENERATE VERIFICATION TOKEN
         // ---------------------------------------------
 
-        const verificationToken = crypto
-            .randomBytes(32)
-            .toString("hex");
+        const otp = generateOTP();
+        const verificationToken = otp
+
+        const otpHtml = OTPhtml(otp);
 
 
         // Token expires after 24 hours
@@ -129,9 +132,7 @@ const signup = async (req, res) => {
 
                 emailVerified: false,
 
-                verificationToken,
-
-                verificationTokenExpiry
+                verificationToken
             }
         });
 
@@ -147,123 +148,7 @@ const signup = async (req, res) => {
         // ---------------------------------------------
         // SEND EMAIL
         // ---------------------------------------------
-
-        await transporter.sendMail({
-
-            from: `"Dayflow HRMS" <${process.env.EMAIL_USER}>`,
-
-            to: user.email,
-
-            subject: "Verify your Dayflow HRMS account",
-
-            html: `
-                <!DOCTYPE html>
-
-                <html>
-
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Verify Email</title>
-                </head>
-
-                <body style="
-                    margin: 0;
-                    padding: 0;
-                    background: #f4f4f5;
-                    font-family: Arial, sans-serif;
-                ">
-
-                    <div style="
-                        max-width: 600px;
-                        margin: 40px auto;
-                        background: white;
-                        padding: 40px;
-                        border-radius: 12px;
-                    ">
-
-                        <h1 style="
-                            color: #18181b;
-                            margin-bottom: 10px;
-                        ">
-                            Welcome to Dayflow
-                        </h1>
-
-                        <p style="
-                            color: #52525b;
-                            font-size: 16px;
-                            line-height: 1.6;
-                        ">
-                            Hello ${user.email},
-                        </p>
-
-                        <p style="
-                            color: #52525b;
-                            font-size: 16px;
-                            line-height: 1.6;
-                        ">
-                            Thank you for creating your Dayflow HRMS account.
-                            Please verify your email address to activate
-                            your account.
-                        </p>
-
-                        <div style="
-                            text-align: center;
-                            margin: 30px 0;
-                        ">
-
-                            <a
-                                href="${verificationLink}"
-                                style="
-                                    display: inline-block;
-                                    padding: 14px 28px;
-                                    background: #18181b;
-                                    color: white;
-                                    text-decoration: none;
-                                    border-radius: 8px;
-                                    font-weight: bold;
-                                "
-                            >
-                                Verify Email
-                            </a>
-
-                        </div>
-
-                        <p style="
-                            color: #71717a;
-                            font-size: 14px;
-                        ">
-                            This verification link will expire in 24 hours.
-                        </p>
-
-                        <p style="
-                            color: #71717a;
-                            font-size: 14px;
-                        ">
-                            If you did not create this account, you can
-                            safely ignore this email.
-                        </p>
-
-                        <hr style="
-                            border: none;
-                            border-top: 1px solid #e4e4e7;
-                            margin: 30px 0;
-                        ">
-
-                        <p style="
-                            color: #a1a1aa;
-                            font-size: 12px;
-                            text-align: center;
-                        ">
-                            Dayflow HR Management System
-                        </p>
-
-                    </div>
-
-                </body>
-
-                </html>
-            `
-        });
+        await sendEmail(email, "OTP Verification", `Your OTP code is ${otp}`, otpHtml);
 
 
         // ---------------------------------------------
@@ -360,23 +245,6 @@ const verifyEmail = async (req, res) => {
 
 
         // ---------------------------------------------
-        // CHECK EXPIRY
-        // ---------------------------------------------
-
-        if (
-            !user.verificationTokenExpiry ||
-            user.verificationTokenExpiry < new Date()
-        ) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Verification token has expired"
-            });
-
-        }
-
-
-        // ---------------------------------------------
         // VERIFY USER
         // ---------------------------------------------
 
@@ -391,9 +259,7 @@ const verifyEmail = async (req, res) => {
                 emailVerified: true,
 
                 // Remove token after successful verification
-                verificationToken: null,
-
-                verificationTokenExpiry: null
+                verificationToken: null
 
             }
 
