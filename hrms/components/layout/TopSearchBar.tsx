@@ -1,0 +1,80 @@
+"use client";
+
+import React from "react";
+import { useApp } from "@/context/AppContext";
+import { Search, Bell, Shield, User } from "lucide-react";
+
+interface TopSearchBarProps {
+  onToggleNotifications: () => void;
+}
+
+export const TopSearchBar: React.FC<TopSearchBarProps> = ({ onToggleNotifications }) => {
+  const { role, toggleRole, notifications, searchTerm, setSearchTerm, userProfile } = useApp();
+
+  const unreadCount = notifications.filter((n) => n.isUnread).length;
+
+  return (
+    <header className="w-full flex items-center justify-between gap-4 mb-6">
+      {/* Pill Search Input */}
+      <div className="relative flex-1 max-w-md">
+        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9C9AB8]" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search employees, requests, docs..."
+          className="w-full pl-10 pr-4 py-2 bg-white rounded-full border border-[#ECEBF7] text-xs text-[#2B2A45] placeholder-[#9C9AB8] focus:outline-none focus:border-[#4f45ba] focus:ring-2 focus:ring-[#EEEDFE] shadow-xs transition-all"
+        />
+      </div>
+
+      {/* Right Controls */}
+      <div className="flex items-center gap-3 shrink-0">
+        {/* Role Toggle Switcher */}
+        <button
+          onClick={toggleRole}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#ECEBF7] text-xs font-medium text-[#2B2A45] hover:border-[#4f45ba] transition-all shadow-xs cursor-pointer"
+          title="Click to toggle view role between Employee and Admin/HR"
+        >
+          {role === "admin" ? (
+            <>
+              <Shield className="w-3.5 h-3.5 text-[#4f45ba]" />
+              <span>Admin / HR View</span>
+              <span className="ml-1 text-[10px] bg-[#EEEDFE] text-[#4f45ba] px-1.5 py-0.2 rounded-full font-semibold">
+                HR
+              </span>
+            </>
+          ) : (
+            <>
+              <User className="w-3.5 h-3.5 text-[#8583A6]" />
+              <span>Employee View</span>
+              <span className="ml-1 text-[10px] bg-[#F4F3FB] text-[#8583A6] px-1.5 py-0.2 rounded-full font-semibold">
+                EMP
+              </span>
+            </>
+          )}
+        </button>
+
+        {/* Notifications Bell */}
+        <button
+          onClick={onToggleNotifications}
+          className="relative w-9 h-9 rounded-full bg-white border border-[#ECEBF7] flex items-center justify-center text-[#2B2A45] hover:bg-[#F4F3FB] hover:border-[#4f45ba] transition-colors shadow-xs"
+          title="Notifications"
+        >
+          <Bell className="w-4 h-4 text-[#2B2A45]" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-[#4f45ba] ring-2 ring-white" />
+          )}
+        </button>
+
+        {/* User Mini Avatar */}
+        <div className="flex items-center gap-2 pl-1">
+          <img
+            src={userProfile.avatar}
+            alt={userProfile.name}
+            className="w-8 h-8 rounded-full object-cover border border-[#ECEBF7]"
+          />
+        </div>
+      </div>
+    </header>
+  );
+};
