@@ -115,7 +115,7 @@ export default function SignInPage() {
               />
             </FormFieldSet>
 
-            {/* Checkbox + Forgot password */}
+            {/* Checkbox */}
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 cursor-pointer text-[#8583A6]">
                 <input
@@ -126,9 +126,6 @@ export default function SignInPage() {
                 />
                 Remember me
               </label>
-              <a href="#" className="text-[#4f45ba] hover:underline font-medium">
-                Forgot password?
-              </a>
             </div>
 
             {/* Submit Button */}
