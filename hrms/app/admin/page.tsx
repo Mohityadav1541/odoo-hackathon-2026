@@ -141,6 +141,11 @@ export default function AdminDashboardPage() {
         name={userProfile.name}
         subtitle="HR & Operations Administrator • Dayflow HRMS"
         actionButton={
+          <div className="flex items-center gap-3">
+            <Link href="/admin/promotion" className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Promotion Engine
+            </Link>
           <button
             onClick={() => setIsNewEmployeeModalOpen(true)}
             className="px-4 py-2 bg-[#4f45ba] hover:bg-[#4038a3] text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
@@ -148,6 +153,7 @@ export default function AdminDashboardPage() {
             <UserPlus className="w-3.5 h-3.5" />
             New Employee
           </button>
+          </div>
         }
       />
 
@@ -320,6 +326,7 @@ export default function AdminDashboardPage() {
       </ModalDrawer>
 
       {/* New Employee Modal */}
+          </div>
       <NewEmployeeModal
         isOpen={isNewEmployeeModalOpen}
         onClose={() => setIsNewEmployeeModalOpen(false)}

@@ -61,7 +61,7 @@ export const SidebarNav: React.FC = () => {
       role: "all",
     },
     { label: "Projects", href: "/projects", icon: FolderKanban, role: "all" },
-    { label: "Performance", href: "/admin/promotion", icon: TrendingUp, role: "admin" },
+    { label: "Promotion", href: "/admin/promotion", icon: TrendingUp, role: "admin" },
     { label: "Reports", href: "/reports", icon: BarChart3, role: "admin" },
   ];
 
