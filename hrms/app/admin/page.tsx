@@ -24,6 +24,7 @@ import {
   Eye,
   Building,
   UserPlus,
+  TrendingUp,
 } from "lucide-react";
 
 export default function AdminDashboardPage() {
